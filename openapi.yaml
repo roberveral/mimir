@@ -59,7 +59,7 @@ components:
           example: "https://myapplication.example.org"
         redirect_url:
           type: string
-          description: URL to the main page of the client application.
+          description: URL to the callback used in the Authorization Code flow.
           format: uri
           example: "https://myapplication.example.org/authorize"
       required:
@@ -69,7 +69,7 @@ components:
     
     Client:
       type: object
-      description: Model used for registering new clients in the Authorization Server.
+      description: Model for application clients registered in the Authorization Server.
       properties:
         client_id:
           type: string
@@ -91,7 +91,7 @@ components:
           example: "https://myapplication.example.org"
         redirect_url:
           type: string
-          description: URL to the main page of the client application.
+          description: URL to the callback used in the Authorization Code flow.
           format: uri
           example: "https://myapplication.example.org/authorize"
         owner:
@@ -457,7 +457,7 @@ paths:
         
         The access token is a JWT token signed with the public key of the authorization server and which
         contain the following information.
-          - sub (username or client_id, dependin of the entity which holds the permission).
+          - sub (username or client_id, depending on the entity which holds the permission).
           - client_id (client who acts on behalf of the subject).
           - name (name of the authenticated user).
           - email (email of the authenticated user).

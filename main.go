@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	fmt.Println("OAuth Authorization Server - To Be Implemented")
+	log.Info("OAuth Authorization Server - To Be Implemented")
 }
