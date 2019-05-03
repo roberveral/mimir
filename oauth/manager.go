@@ -2,8 +2,7 @@ package oauth
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/roberveral/oauth-server/utils"
@@ -14,6 +13,11 @@ import (
 	"github.com/roberveral/oauth-server/oauth/token"
 
 	"github.com/google/uuid"
+)
+
+const (
+	tokenExpirationTime = 10800
+	codeExpirationTime  = 10
 )
 
 // authorizeHandler is the function signature that the handlers for the different
@@ -94,7 +98,7 @@ func (m *Manager) RegisterClient(ctx context.Context, input *model.ClientInput) 
 		ClientSecret: utils.RandString(20),
 		Name:         input.Name,
 		URL:          input.URL,
-		RedirectURL:  input.RedirectURL,
+		RedirectURI:  input.RedirectURI,
 		Owner:        user,
 	}
 
@@ -109,6 +113,13 @@ func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInpu
 	client, err := m.GetClientByID(ctx, input.ClientID)
 	if err != nil {
 		return nil, err
+	}
+
+	// If missing RedirectURI, use the provided during client registration
+	if input.RedirectURI == "" {
+		input.RedirectURI = client.RedirectURI
+	} else if input.RedirectURI != client.RedirectURI {
+		return nil, &InvalidRedirectURIError{input.RedirectURI, client.ClientID}
 	}
 
 	// Execute the logic for generating the authorization code depending on the response_type.
@@ -129,9 +140,19 @@ func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInpu
 		return nil, err
 	}
 
+	// Prepare the callback URI with the proper query parameters
+	redirectURL, err := url.Parse(input.RedirectURI)
+	if err != nil {
+		return nil, err
+	}
+	redirectURL.Query().Add("code", code)
+	if input.State != "" {
+		redirectURL.Query().Add("state", input.State)
+	}
+
 	response := &model.OAuthAuthorizeResponse{
 		Code:        code,
-		RedirectURL: fmt.Sprintf("%s?code=%s&state=%s", input.RedirectURI, code, input.State),
+		RedirectURI: redirectURL.String(),
 	}
 
 	return response, nil
@@ -169,7 +190,7 @@ func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*mod
 	response := &model.OAuthTokenResponse{
 		AccessToken: encodedToken,
 		TokenType:   model.BearerTokenType,
-		ExpiresIn:   3600,
+		ExpiresIn:   tokenExpirationTime,
 	}
 
 	return response, nil
@@ -179,14 +200,6 @@ func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*mod
 // It generates an authorization code for the authorized client, including all the info required
 // to validate the request to obtain an access token.
 func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, input *model.OAuthAuthorizeInput) (*model.OAuthAuthorizationCode, error) {
-	// If missing RedirectURI, use the provided during client registration
-	redirectURI := input.RedirectURI
-	if redirectURI == "" {
-		redirectURI = client.RedirectURL
-	} else if redirectURI != client.RedirectURL {
-		return nil, &InvalidRedirectURIError{redirectURI, client.ClientID}
-	}
-
 	// Retrieve authenticated user (Resource Owner) who authorizes the client to act on
 	// his behalf.
 	user, ok := utils.GetAuthenticatedUserFromContext(ctx)
@@ -198,40 +211,42 @@ func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, i
 		TokenID:        uuid.New().String(),
 		UserID:         user,
 		ClientID:       client.ClientID,
-		RedirectURI:    redirectURI,
-		ExpirationTime: time.Now().Add(10 * time.Second),
+		RedirectURI:    input.RedirectURI,
+		ExpirationTime: time.Now().Add(codeExpirationTime * time.Second),
 	}
 
 	return code, nil
 }
 
 func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input *model.OAuthTokenInput) (*model.OAuthAccessToken, error) {
+	// Decode and validate authorization code to check if it was issued by the Authorization Server and
+	// it has not expired.
 	code, err := m.authCodeProvider.ValidateCode(input.Code)
 	if err != nil {
 		return nil, err
 	}
 
+	// Check that the authorization code was issued for the same client_id and redirect_uri
 	if code.ClientID != client.ClientID || code.RedirectURI != input.RedirectURI {
-		return nil, errors.New("authorization code not valid for this client_id")
+		return nil, &AuthorizationCodeConflictError{}
 	}
 
+	// Check client credentials, to ensure that the request comes from the client
 	if input.ClientSecret != client.ClientSecret {
-		return nil, errors.New("invalid client_secret")
+		return nil, &InvalidClientCredentialsError{}
 	}
 
-	if code.ExpirationTime.Before(time.Now()) {
-		return nil, errors.New("expired authorization code")
-	}
-
+	// Check if the authorization code has been already used
 	alreadyUsed, err := m.authCodeRepository.CheckAuthorizationCodeByID(ctx, code.TokenID)
 	if err != nil {
 		return nil, err
 	}
 
 	if alreadyUsed {
-		return nil, errors.New("authorization_code already used")
+		return nil, &UsedAuthorizationCodeError{}
 	}
 
+	// Get user (Resource Owner) information, so the client can act on his behalf
 	user, err := m.identityProvider.GetUserByID(ctx, code.UserID)
 	if err != nil {
 		return nil, err
@@ -239,10 +254,11 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 
 	accessToken := &model.OAuthAccessToken{
 		ClientID:       client.ClientID,
-		ExpirationTime: time.Now().Add(3 * time.Hour),
+		ExpirationTime: time.Now().Add(tokenExpirationTime * time.Second),
 		User:           user,
 	}
 
+	// Mark the authorization code as used, so it's rejected for now on.
 	if err = m.authCodeRepository.StoreUsedAuthorizationCode(ctx, code); err != nil {
 		return nil, err
 	}

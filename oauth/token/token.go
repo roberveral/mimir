@@ -22,6 +22,7 @@ type AuthorizationCodeProvider interface {
 	// encrypted token which only the Authorization Server can decrypt.
 	GenerateCode(authorizationCode *model.OAuthAuthorizationCode) (string, error)
 
-	// ValidateCode descrypts the OAuthAuthorizationCode info from the given encrypted token.
+	// ValidateCode decrypts the OAuthAuthorizationCode info from the given encrypted token.
+	// It must check signature along with expiration time.
 	ValidateCode(code string) (*model.OAuthAuthorizationCode, error)
 }

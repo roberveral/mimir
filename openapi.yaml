@@ -57,7 +57,7 @@ components:
           description: URL to the main page of the client application.
           format: uri
           example: "https://myapplication.example.org"
-        redirect_url:
+        redirect_uri:
           type: string
           description: URL to the callback used in the Authorization Code flow.
           format: uri
@@ -65,7 +65,7 @@ components:
       required:
         - name
         - url
-        - redirect_url
+        - redirect_uri
     
     Client:
       type: object
@@ -89,7 +89,7 @@ components:
           description: URL to the main page of the client application.
           format: uri
           example: "https://myapplication.example.org"
-        redirect_url:
+        redirect_uri:
           type: string
           description: URL to the callback used in the Authorization Code flow.
           format: uri
@@ -103,7 +103,7 @@ components:
         - client_secret
         - name
         - url
-        - redirect_url
+        - redirect_uri
         - owner
     
     # Models related to OAuth 2.0 defined endpoints
@@ -115,14 +115,14 @@ components:
           type: string
           description: Authorization Code sent to the callback so it can be used to obtain an access token. Contents are encrypted so only the Authorization Server can access the token information.
           example: "eYJasd454vdsfs2awvbpoy4"
-        redirect_url:
+        redirect_uri:
           type: string
           format: uri
           description: URL of the client where the UI should redirect the user to complete the authorization flow. This url contains all the required query params.
           example: "https://myapplication.example.org/authorize"
       required:
         - code
-        - redirect_url
+        - redirect_uri
         
     OAuthTokenInput:
       type: object
@@ -397,7 +397,7 @@ paths:
         endpoint is performed by an authenticated user, it means that the user is authorizing the client
         defined by the client_id to act on his behalf and therefore to obtain an access token.
         
-        The frontend MUST redirect the user to the returned redirect_url in order to continue with the
+        The frontend MUST redirect the user to the returned redirect_uri in order to continue with the
         authorization flow.
       operationId: authorizeOAuthClient
       tags: 

@@ -52,3 +52,30 @@ func TestInvalidRedirectURIErrorReturnsCorrectReason(t *testing.T) {
 		e.Error(),
 		"Error message should be the expected")
 }
+
+func TestAuthorizationCodeConflictErrorReturnsCorrectReason(t *testing.T) {
+	e := &AuthorizationCodeConflictError{}
+
+	assert.Equal(t,
+		"The provided authorization code is not valid for this client_id and/or redirect_uri",
+		e.Error(),
+		"Error message should be the expected")
+}
+
+func TestInvalidClientCredentialsErrorReturnsCorrectReason(t *testing.T) {
+	e := &InvalidClientCredentialsError{}
+
+	assert.Equal(t,
+		"Invalid client credentials",
+		e.Error(),
+		"Error message should be the expected")
+}
+
+func TestUsedAuthorizationCodeErrorReturnsCorrectReason(t *testing.T) {
+	e := &UsedAuthorizationCodeError{}
+
+	assert.Equal(t,
+		"The provided authorization code has already been used and it can only be used once",
+		e.Error(),
+		"Error message should be the expected")
+}

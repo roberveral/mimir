@@ -42,7 +42,7 @@ type OAuthAuthorizeResponse struct {
 
 	// URL of the client where the UI should redirect the user to complete the
 	// authorization flow. This url contains all the required query params.
-	RedirectURL string `json:"redirect_url" validate:"required"`
+	RedirectURI string `json:"redirect_uri" validate:"required,url"`
 }
 
 // OAuthAuthorizationCode is the model for the Authorization Code token used in the

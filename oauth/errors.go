@@ -54,3 +54,27 @@ type InvalidRedirectURIError struct {
 func (e *InvalidRedirectURIError) Error() string {
 	return fmt.Sprintf("The given redirect_uri '%s' is not registered for the client '%s'", e.RedirectURI, e.ClientID)
 }
+
+// AuthorizationCodeConflictError is the error returned when the authorization code
+// provided for getting a token was issued for a different client_id or redirect_url.
+type AuthorizationCodeConflictError struct{}
+
+func (e *AuthorizationCodeConflictError) Error() string {
+	return "The provided authorization code is not valid for this client_id and/or redirect_uri"
+}
+
+// InvalidClientCredentialsError is the error returned when the provided client credentials
+// (client_secret) doesn't match the registered for the client.
+type InvalidClientCredentialsError struct{}
+
+func (e *InvalidClientCredentialsError) Error() string {
+	return "Invalid client credentials"
+}
+
+// UsedAuthorizationCodeError is the error returned when the authorization code
+// has been stored as used, so it can't be used again.
+type UsedAuthorizationCodeError struct{}
+
+func (e *UsedAuthorizationCodeError) Error() string {
+	return "The provided authorization code has already been used and it can only be used once"
+}
