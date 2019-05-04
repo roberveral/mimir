@@ -14,10 +14,10 @@ type Client struct {
 	Name string `json:"name" validate:"required"`
 
 	// URL to the main page of the client application.
-	URL string `json:"url" validate:"required"`
+	URL string `json:"url" validate:"required,url"`
 
 	// URL to the callback used in the Authorization Code flow.
-	RedirectURL string `json:"redirect_url" validate:"required"`
+	RedirectURI string `json:"redirect_uri" validate:"required,url"`
 
 	// User who registered the client.
 	Owner string `json:"owner" validate:"required"`
@@ -32,5 +32,5 @@ type ClientInput struct {
 	URL string `json:"url" validate:"required"`
 
 	// URL to the callback used in the Authorization Code flow.
-	RedirectURL string `json:"redirect_url" validate:"required"`
+	RedirectURI string `json:"redirect_uri" validate:"required,url"`
 }
