@@ -463,7 +463,7 @@ paths:
         The access token is a JWT token signed with the public key of the authorization server and which
         contain the following information.
           - sub (username or client_id, depending on the entity which holds the permission).
-          - client_id (client who acts on behalf of the subject).
+          - cid (client who acts on behalf of the subject).
           - name (name of the authenticated user).
           - email (email of the authenticated user).
           - picture (url to the user profile picture).

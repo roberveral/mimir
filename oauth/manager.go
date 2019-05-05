@@ -10,7 +10,9 @@ import (
 	"github.com/roberveral/oauth-server/oauth/idp"
 	"github.com/roberveral/oauth-server/oauth/model"
 	"github.com/roberveral/oauth-server/oauth/repository"
+	"github.com/roberveral/oauth-server/oauth/repository/mongodb"
 	"github.com/roberveral/oauth-server/oauth/token"
+	"github.com/roberveral/oauth-server/oauth/token/jwt"
 
 	"github.com/google/uuid"
 )
@@ -28,12 +30,26 @@ type authorizeHandler func(context.Context, *model.Client, *model.OAuthAuthorize
 // grant types in the OAuth Token exchange phase must implement.
 type tokenHandler func(context.Context, *model.Client, *model.OAuthTokenInput) (*model.OAuthAccessToken, error)
 
+// Manager contains all the OAuth 2 core logic. It allows to manage clients,
+// to authorize a client and to obtain access tokens.
 type Manager struct {
 	clientRepository    repository.ClientRepository
 	identityProvider    idp.IdentityProvider
 	authCodeRepository  repository.AuthorizationCodeRepository
 	authCodeProvider    token.AuthorizationCodeProvider
 	accessTokenProvider token.AccessTokenProvider
+}
+
+// NewManager creates a new OAuth Manager which uses MongoDB as persistence and JWT as token
+// provider.
+func NewManager(identityProvider idp.IdentityProvider, store *mongodb.Store, provider *jwt.TokenProvider) *Manager {
+	return &Manager{
+		clientRepository:    store,
+		identityProvider:    identityProvider,
+		authCodeRepository:  store,
+		authCodeProvider:    provider,
+		accessTokenProvider: provider,
+	}
 }
 
 // getAuthorizeHandler obtains the handler for the given response_type in the OAuth
@@ -83,6 +99,12 @@ func (m *Manager) GetClientByID(ctx context.Context, clientID string) (*model.Cl
 	return client, nil
 }
 
+// GetClientsByOwner obtains all the clients registered in the Authorization Server by
+// a given owner.
+func (m *Manager) GetClientsByOwner(ctx context.Context, owner string) ([]*model.Client, error) {
+	return m.clientRepository.GetAllClientsByOwner(ctx, owner)
+}
+
 // RegisterClient registers a new client with the Authorization Server. A registered client can
 // perform OAuth Authorization to get access to protected resources. On registration, a client_id
 // and client_secret are generated and returned.
@@ -103,6 +125,17 @@ func (m *Manager) RegisterClient(ctx context.Context, input *model.ClientInput) 
 	}
 
 	return m.clientRepository.StoreClient(ctx, client)
+}
+
+// DeleteClient removes a registered client from the Authorization Server. If the client
+// doesn't exist a ClientNotFoundError is returned.
+func (m *Manager) DeleteClient(ctx context.Context, clientID string) error {
+	client, err := m.GetClientByID(ctx, clientID)
+	if err != nil {
+		return err
+	}
+
+	return m.clientRepository.DeleteClient(ctx, client)
 }
 
 // Authorize performs the OAuth authorization request where a user (Resource Owner) grants
