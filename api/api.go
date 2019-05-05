@@ -23,6 +23,13 @@ type Controller struct {
 	errorHandler ErrorHandler
 }
 
+// NewController creates a new Controller. A Controller is able to perform an action
+// so it can be mapped to an HTTP route. It uses the given error handler to obtain
+// the appropriate status code in case of error.
+func NewController(eh ErrorHandler) Controller {
+	return Controller{eh}
+}
+
 // Perform obtains the function to handle a HTTP request executing the given action. If
 // the actions returns an error, it is mapped to the aproppiate status code.
 func (c *Controller) Perform(a Action) http.Handler {
@@ -54,9 +61,9 @@ func SendErrorResponse(statusCode int, rw http.ResponseWriter, err error) error 
 	return encoder.Encode(response)
 }
 
-// decodeAndValidateJSON decodes the JSON in the input reader into the given type and
+// DecodeAndValidateJSON decodes the JSON in the input reader into the given type and
 // validates the struct based on its struct tags.
-func decodeAndValidateJSON(r io.Reader, v interface{}) error {
+func DecodeAndValidateJSON(r io.Reader, v interface{}) error {
 	if err := json.NewDecoder(r).Decode(v); err != nil {
 		return nil
 	}

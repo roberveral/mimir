@@ -42,7 +42,7 @@ func New(url string, dbName string) (*Store, error) {
 func (m *Store) StoreClient(ctx context.Context, client *model.Client) (*model.Client, error) {
 	_, err := m.client.ReplaceOne(ctx,
 		bson.D{
-			{Key: "ClientID", Value: client.ClientID},
+			{Key: "clientid", Value: client.ClientID},
 		},
 		client,
 		options.Replace().SetUpsert(true))
@@ -59,7 +59,7 @@ func (m *Store) GetClientByID(ctx context.Context, clientID string) (*model.Clie
 	var client model.Client
 	err := m.client.FindOne(ctx,
 		bson.D{
-			{Key: "ClientID", Value: clientID},
+			{Key: "clientid", Value: clientID},
 		}).Decode(&client)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
@@ -76,7 +76,7 @@ func (m *Store) GetClientByID(ctx context.Context, clientID string) (*model.Clie
 func (m *Store) GetAllClientsByOwner(ctx context.Context, owner string) ([]*model.Client, error) {
 	clients := make([]*model.Client, 0)
 	cursor, err := m.client.Find(ctx, bson.D{
-		{Key: "Owner", Value: owner},
+		{Key: "owner", Value: owner},
 	})
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (m *Store) GetAllClientsByOwner(ctx context.Context, owner string) ([]*mode
 func (m *Store) DeleteClientByID(ctx context.Context, clientID string) error {
 	_, err := m.client.DeleteOne(ctx,
 		bson.D{
-			{Key: "ClientID", Value: clientID},
+			{Key: "clientid", Value: clientID},
 		})
 
 	return err
@@ -121,7 +121,7 @@ func (m *Store) DeleteClient(ctx context.Context, client *model.Client) error {
 func (m *Store) StoreUsedAuthorizationCode(ctx context.Context, code *model.OAuthAuthorizationCode) error {
 	_, err := m.authCode.ReplaceOne(ctx,
 		bson.D{
-			{Key: "TokenID", Value: code.TokenID},
+			{Key: "tokenid", Value: code.TokenID},
 		},
 		code,
 		options.Replace().SetUpsert(true))
@@ -135,7 +135,7 @@ func (m *Store) CheckAuthorizationCodeByID(ctx context.Context, tokenID string) 
 	var code model.OAuthAuthorizationCode
 	err := m.authCode.FindOne(ctx,
 		bson.D{
-			{Key: "TokenID", Value: tokenID},
+			{Key: "tokenid", Value: tokenID},
 		}).Decode(&code)
 	if err == mongo.ErrNoDocuments {
 		return false, nil

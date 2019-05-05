@@ -17,11 +17,11 @@ type Client struct {
 	manager *oauth.Manager
 }
 
-// NewClient creates a new Client controller, which uses the given error handler
-// and the given OAuth Manager to manage registered clients.
-func NewClient(errorHandler ErrorHandler, manager *oauth.Manager) *Client {
+// NewClient creates a new Client controller, which uses the given
+// OAuth Manager to manage registered clients.
+func NewClient(manager *oauth.Manager) *Client {
 	return &Client{
-		Controller: Controller{errorHandler},
+		Controller: NewController(clientErrorHandler),
 		manager:    manager,
 	}
 }
@@ -41,7 +41,7 @@ func (c *Client) Register(r *mux.Router) {
 // the only one who can query the client and its associated secret.
 func (c *Client) RegisterClient(rw http.ResponseWriter, r *http.Request) error {
 	var input model.ClientInput
-	if err := decodeAndValidateJSON(r.Body, &input); err != nil {
+	if err := DecodeAndValidateJSON(r.Body, &input); err != nil {
 		SendErrorResponse(http.StatusBadRequest, rw, err)
 		return nil
 	}
@@ -101,4 +101,16 @@ func (c *Client) GetAllClients(rw http.ResponseWriter, r *http.Request) error {
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	return json.NewEncoder(rw).Encode(clients)
+}
+
+// Converts between possible errors during Client endpoints and status codes.
+func clientErrorHandler(err error) int {
+	switch err.(type) {
+	case *oauth.ClientNotFoundError:
+		return http.StatusNotFound
+	case *oauth.UserNotAuthenticatedError:
+		return http.StatusUnauthorized
+	default:
+		return http.StatusInternalServerError
+	}
 }

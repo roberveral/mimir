@@ -17,11 +17,11 @@ type Authorize struct {
 	manager *oauth.Manager
 }
 
-// NewAuthorize creates a new Authorize controller, which uses the given error handler
-// and the given OAuth Manager to perform the Authorize operation.
-func NewAuthorize(errorHandler ErrorHandler, manager *oauth.Manager) *Authorize {
+// NewAuthorize creates a new Authorize controller, which uses the given OAuth Manager
+// to perform the Authorize operation.
+func NewAuthorize(manager *oauth.Manager) *Authorize {
 	return &Authorize{
-		Controller: Controller{errorHandler},
+		Controller: NewController(authorizeErrorHandler),
 		manager:    manager,
 	}
 }
@@ -60,4 +60,20 @@ func (c *Authorize) AuthorizeOAuthClient(rw http.ResponseWriter, r *http.Request
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	return json.NewEncoder(rw).Encode(response)
+}
+
+// Converts between possible errors during Authorize and status codes.
+func authorizeErrorHandler(err error) int {
+	switch err.(type) {
+	case *oauth.InvalidResponseTypeError:
+		return http.StatusBadRequest
+	case *oauth.ClientNotFoundError:
+		return http.StatusBadRequest
+	case *oauth.InvalidRedirectURIError:
+		return http.StatusBadRequest
+	case *oauth.UserNotAuthenticatedError:
+		return http.StatusUnauthorized
+	default:
+		return http.StatusInternalServerError
+	}
 }

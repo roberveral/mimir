@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/roberveral/oauth-server/oauth"
+	"github.com/roberveral/oauth-server/oauth/idp"
 	"github.com/roberveral/oauth-server/oauth/model"
 	"github.com/roberveral/oauth-server/utils"
 )
@@ -19,9 +20,9 @@ type Token struct {
 
 // NewToken creates a new Token controller, which uses the given error handler
 // and the given OAuth Manager to perform the Token operation.
-func NewToken(errorHandler ErrorHandler, manager *oauth.Manager) *Token {
+func NewToken(manager *oauth.Manager) *Token {
 	return &Token{
-		Controller: Controller{errorHandler},
+		Controller: NewController(tokenErrorHandler),
 		manager:    manager,
 	}
 }
@@ -73,4 +74,24 @@ func (c *Token) GetOAuthToken(rw http.ResponseWriter, r *http.Request) error {
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	return json.NewEncoder(rw).Encode(response)
+}
+
+// Converts between possible errors during Token call and status codes.
+func tokenErrorHandler(err error) int {
+	switch err.(type) {
+	case *oauth.InvalidGrantTypeError:
+		return http.StatusBadRequest
+	case *oauth.ClientNotFoundError:
+		return http.StatusBadRequest
+	case *oauth.AuthorizationCodeConflictError:
+		return http.StatusConflict
+	case *oauth.InvalidClientCredentialsError:
+		return http.StatusUnauthorized
+	case *oauth.UsedAuthorizationCodeError:
+		return http.StatusNotAcceptable
+	case *idp.InvalidCredentialsError:
+		return http.StatusUnauthorized
+	default:
+		return http.StatusInternalServerError
+	}
 }

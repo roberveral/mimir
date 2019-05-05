@@ -178,10 +178,13 @@ func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInpu
 	if err != nil {
 		return nil, err
 	}
-	redirectURL.Query().Add("code", code)
+
+	q := redirectURL.Query()
+	q.Set("code", code)
 	if input.State != "" {
-		redirectURL.Query().Add("state", input.State)
+		q.Set("state", input.State)
 	}
+	redirectURL.RawQuery = q.Encode()
 
 	response := &model.OAuthAuthorizeResponse{
 		Code:        code,
