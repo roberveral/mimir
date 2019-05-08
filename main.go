@@ -72,8 +72,7 @@ func main() {
 	api.NewAuthorize(oauthManager).Register(ar)
 	api.NewToken(oauthManager).Register(uar)
 	ar.Use(authJwt.Handler)
-	r.Use(corsMw.Handler)
 
 	log.Infof("Starting server in port %d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), r))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), corsMw.Handler(r)))
 }
