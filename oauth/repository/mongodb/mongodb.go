@@ -8,6 +8,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Store implements ClientRepository and AuthCodeRepository
@@ -23,10 +25,18 @@ type Store struct {
 // New creates a new Store which has implementations for all the repositories
 // required by the Authorization Server.
 func New(url string, dbName string) (*Store, error) {
+	log.Infof("Connecting to MongoDB: %s", url)
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(url))
 	if err != nil {
 		return nil, err
 	}
+
+	if err = client.Ping(nil, nil); err != nil {
+		log.Error("Unable to connect to MongoDB: ", err)
+		return nil, err
+	}
+
+	log.Info("MongoDB connection established")
 
 	db := client.Database(dbName)
 

@@ -7,14 +7,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/roberveral/oauth-server/api"
-	"github.com/roberveral/oauth-server/api/auth"
 	"github.com/roberveral/oauth-server/oauth"
 	"github.com/roberveral/oauth-server/oauth/idp/ldap"
 	"github.com/roberveral/oauth-server/oauth/repository/mongodb"
 	"github.com/roberveral/oauth-server/oauth/token/jwt"
 	"github.com/roberveral/oauth-server/utils"
+
+	"github.com/gorilla/mux"
+	"github.com/roberveral/oauth-server/api"
+	"github.com/roberveral/oauth-server/api/auth"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 )
@@ -34,23 +35,23 @@ func main() {
 	}
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Unable to load LDAP IDP from configuration: ", err)
 		return
 	}
 	oauthProvider, err := jwt.New(privateKey)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Unable to load OAuth Manager from configuration: ", err)
 		return
 	}
-	identityProvider, err := ldap.New("ldap://localhost", "cn=readonly,dc=example,dc=org", "readonly",
+	idp, err := ldap.New("ldap://localhost", "cn=readonly,dc=example,dc=org", "readonly",
 		ldap.WithBaseDN("dc=example,dc=org"),
 		ldap.WithNameAttr("gecos"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Unable to load JWT from configuration: ", err)
 		return
 	}
 
-	oauthManager := oauth.NewManager(identityProvider, oauthStore, oauthProvider)
+	oauthManager := oauth.NewManager(idp, oauthStore, oauthProvider)
 
 	corsMw := cors.New(cors.Options{
 		AllowedHeaders: []string{"*"},
@@ -63,14 +64,21 @@ func main() {
 		return
 	}
 
+	jwks, err := oauthProvider.GetJwks()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
 	// Instantiate HTTP request router
 	r := mux.NewRouter()
 	ar := r.PathPrefix(apiVersion).Subrouter()
 	uar := r.PathPrefix(apiVersion).Subrouter()
-	auth.NewAuthentication(authJwt, identityProvider).Register(uar)
+	auth.NewAuthentication(authJwt, idp).Register(uar)
 	api.NewClient(oauthManager).Register(ar)
 	api.NewAuthorize(oauthManager).Register(ar)
 	api.NewToken(oauthManager).Register(uar)
+	api.NewJwks(jwks).Register(uar)
 	ar.Use(authJwt.Handler)
 
 	log.Infof("Starting server in port %d", port)

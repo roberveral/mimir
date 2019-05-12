@@ -1,9 +1,11 @@
 package jwt
 
+// TODO: unify JOSE libraries: lestrrat?
 import (
 	"crypto/rsa"
 	"time"
 
+	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/roberveral/oauth-server/oauth/model"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -172,6 +174,35 @@ func (j *TokenProvider) ValidateToken(token string) (*model.OAuthAccessToken, er
 			Email:      claims.Email,
 			PictureURI: claims.PictureURI,
 		},
+	}, nil
+}
+
+// GetJwks obtains the JWK set of the keys required to validate the signature
+// of the tokens issued with this token provider.
+func (j *TokenProvider) GetJwks() (*jwk.Set, error) {
+	sign, err := jwk.New(&j.privateKey.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = sign.Set(jwk.KeyIDKey, "access_token"); err != nil {
+		return nil, err
+	}
+
+	if err = sign.Set(jwk.AlgorithmKey, string(jose.RS512)); err != nil {
+		return nil, err
+	}
+
+	if err = sign.Set(jwk.KeyUsageKey, "sig"); err != nil {
+		return nil, err
+	}
+
+	if err = sign.Set(jwk.KeyOpsKey, jwk.KeyOpVerify); err != nil {
+		return nil, err
+	}
+
+	return &jwk.Set{
+		Keys: []jwk.Key{sign},
 	}, nil
 }
 

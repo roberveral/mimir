@@ -11,6 +11,8 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.1
 	github.com/leodido/go-urn v1.1.0 // indirect
+	github.com/lestrrat-go/jwx v0.0.0-20190427112705-0251e8147021
+	github.com/pkg/errors v0.8.1 // indirect
 	github.com/rs/cors v1.6.0
 	github.com/sirupsen/logrus v1.4.1
 	github.com/stretchr/testify v1.2.2
