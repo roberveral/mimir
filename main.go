@@ -1,72 +1,67 @@
 package main
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"fmt"
 	"net/http"
-	"time"
 
-	"github.com/roberveral/oauth-server/oauth"
-	"github.com/roberveral/oauth-server/oauth/idp/ldap"
-	"github.com/roberveral/oauth-server/oauth/repository/mongodb"
-	"github.com/roberveral/oauth-server/oauth/token/jwt"
-	"github.com/roberveral/oauth-server/utils"
+	"github.com/roberveral/oauth-server/config"
 
 	"github.com/gorilla/mux"
 	"github.com/roberveral/oauth-server/api"
 	"github.com/roberveral/oauth-server/api/auth"
-	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 )
 
 const apiVersion = "/v0"
 
 func main() {
-	log.SetLevel(log.DebugLevel)
-
 	log.Info("OAuth Authorization Server - Starting...")
 
-	port := 8000
-	oauthStore, err := mongodb.New("mongodb://localhost:27017", "oauth")
+	conf, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
-	if err != nil {
-		log.Fatal("Unable to load LDAP IDP from configuration: ", err)
-		return
-	}
-	oauthProvider, err := jwt.New(privateKey)
-	if err != nil {
-		log.Fatal("Unable to load OAuth Manager from configuration: ", err)
-		return
-	}
-	idp, err := ldap.New("ldap://localhost", "cn=readonly,dc=example,dc=org", "readonly",
-		ldap.WithBaseDN("dc=example,dc=org"),
-		ldap.WithNameAttr("gecos"))
-	if err != nil {
-		log.Fatal("Unable to load JWT from configuration: ", err)
+		log.Fatal("Invalid configuration: ", err)
 		return
 	}
 
-	oauthManager := oauth.NewManager(idp, oauthStore, oauthProvider)
+	if conf.Debug {
+		log.SetLevel(log.DebugLevel)
+	}
 
-	corsMw := cors.New(cors.Options{
-		AllowedHeaders: []string{"*"},
-	})
-
-	signKey := utils.RandString(20)
-	authJwt, err := auth.NewJwt(3*time.Hour, signKey, "oauth-server")
+	store, err := conf.Mongo.Store()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Unable to create Mongo connector: ", err)
+		return
+	}
+	rsaKey, err := conf.OAuth.RSAKey()
+	if err != nil {
+		log.Fatal("Unable to generate key pair: ", err)
+		return
+	}
+	tokenProvider, err := conf.OAuth.TokenProvider(rsaKey)
+	if err != nil {
+		log.Fatal("Unable to create Token Provider: ", err)
 		return
 	}
 
-	jwks, err := oauthProvider.GetJwks()
+	idp, err := conf.Ldap.IdentityProvider()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Unable to create LDAP connector: ", err)
+		return
+	}
+
+	oauthManager := conf.OAuth.Manager(idp, store, tokenProvider)
+
+	cors := conf.API.Cors(conf.Debug)
+
+	authentication, err := conf.API.Authentication()
+	if err != nil {
+		log.Fatal("Unable to configure API authentication: ", err)
+		return
+	}
+
+	jwks, err := tokenProvider.GetJwks()
+	if err != nil {
+		log.Fatal("Unable to prepare JWK set: ", err)
 		return
 	}
 
@@ -74,13 +69,13 @@ func main() {
 	r := mux.NewRouter()
 	ar := r.PathPrefix(apiVersion).Subrouter()
 	uar := r.PathPrefix(apiVersion).Subrouter()
-	auth.NewAuthentication(authJwt, idp).Register(uar)
+	auth.NewAuthentication(authentication, idp).Register(uar)
 	api.NewClient(oauthManager).Register(ar)
 	api.NewAuthorize(oauthManager).Register(ar)
 	api.NewToken(oauthManager).Register(uar)
 	api.NewJwks(jwks).Register(uar)
-	ar.Use(authJwt.Handler)
+	ar.Use(authentication.Handler)
 
-	log.Infof("Starting server in port %d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), corsMw.Handler(r)))
+	log.Infof("Starting API server in port: %d", conf.API.Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", conf.API.Port), cors.Handler(r)))
 }

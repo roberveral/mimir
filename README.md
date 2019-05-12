@@ -13,6 +13,16 @@ docker run --name oauth-ldap -d -p 389:389 -p 636:636 -e LDAP_READONLY_USER=true
 2. Launch Oauth Authorizaton Server
 
 ```bash
+export APP_API_PORT=8000
+export APP_API_JWT_KEY=F4QJ9VQWr65U27C8A84v
+export APP_LDAP_URL=ldap://localhost
+export APP_LDAP_USER_DN="cn=readonly,dc=example,dc=org"
+export APP_LDAP_PASSWORD=readonly
+export APP_LDAP_BASE_DN="dc=example,dc=org"
+export APP_LDAP_NAME_ATTR=gecos
+export APP_MONGO_URL=mongodb://localhost:27017
+export APP_MONGO_DB=oauth
+
 go run main.go
 ```
 
