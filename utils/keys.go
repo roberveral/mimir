@@ -8,14 +8,14 @@ import (
 )
 
 // DecodeRSAPrivateKey decodes a PEM PKCS1 private key into a rsa.PrivateKey.
-// NOTE: Public Key is not loaded.
+// NOTE: Public Key is automatically derived from the private key.
 func DecodeRSAPrivateKey(data []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(data)
 	return x509.ParsePKCS1PrivateKey(block.Bytes)
 }
 
 // LoadRSAPrivateKeyFromFile reads a PEM PKCS1 private key file into a rsa.PrivateKey.
-// NOTE: Public Key is not loaded.
+// NOTE: Public Key is automatically derived from the private key.
 func LoadRSAPrivateKeyFromFile(path string) (*rsa.PrivateKey, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -42,7 +42,8 @@ func LoadRSAPublicKeyFromFile(path string) (*rsa.PublicKey, error) {
 }
 
 // LoadRSAKeyFromFile reads a PEM PKCS1 key pair (private and public key) into a rsa.PrivateKey
-// with the PublicKey properly set.
+// with the PublicKey properly set to the given one, instead of the default deriving from
+// the private key.
 func LoadRSAKeyFromFile(privateKeyPath, publicKeyPath string) (*rsa.PrivateKey, error) {
 	key, err := LoadRSAPrivateKeyFromFile(privateKeyPath)
 	if err != nil {

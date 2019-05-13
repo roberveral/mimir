@@ -42,8 +42,8 @@ func (c *OAuth) RSAKey() (*rsa.PrivateKey, error) {
 		log.Warn("No private key path set. Using random key")
 		return rsa.GenerateKey(rand.Reader, 4096)
 	} else {
-		log.Infof("Loading RSA keypair from file. Private Key: %s, Public Key: %s", c.PrivateKeyPath, c.PublicKeyPath)
-		return utils.LoadRSAKeyFromFile(c.PrivateKeyPath, c.PublicKeyPath)
+		log.Infof("Loading RSA private key from file: %s", c.PrivateKeyPath)
+		return utils.LoadRSAPrivateKeyFromFile(c.PrivateKeyPath)
 	}
 }
 

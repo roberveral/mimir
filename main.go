@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-
 	"github.com/roberveral/oauth-server/config"
 
 	"github.com/gorilla/mux"
@@ -51,8 +48,6 @@ func main() {
 
 	oauthManager := conf.OAuth.Manager(idp, store, tokenProvider)
 
-	cors := conf.API.Cors(conf.Debug)
-
 	authentication, err := conf.API.Authentication()
 	if err != nil {
 		log.Fatal("Unable to configure API authentication: ", err)
@@ -76,6 +71,5 @@ func main() {
 	api.NewJwks(jwks).Register(uar)
 	ar.Use(authentication.Handler)
 
-	log.Infof("Starting API server in port: %d", conf.API.Port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", conf.API.Port), cors.Handler(r)))
+	log.Fatal(conf.API.Start(r, conf.Debug))
 }

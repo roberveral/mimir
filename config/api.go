@@ -1,6 +1,9 @@
 package config
 
 import (
+	"crypto/tls"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/roberveral/oauth-server/api/auth"
@@ -22,6 +25,7 @@ type Api struct {
 	// CORS is the configuration related to the CORS configuration of the
 	// exposed API.
 	CORS ApiCORS
+	TLS  ApiTLS
 }
 
 // ApiJWT is the configuration related to the authentication tokens in the
@@ -32,7 +36,7 @@ type ApiJWT struct {
 	// Default value is 3h
 	TTL TTL `default:"3h"`
 	// Key is the key used to sign the authentication token.
-	Key string `required:"true"`
+	Key string
 	// Issuer is the issuer set in the authentication tokens.
 	// Default value is 'oauth-server-api'
 	Issuer string `default:"oauth-server-api"`
@@ -59,6 +63,11 @@ type ApiCORS struct {
 	ExposedHeaders []string `split_words:"true"`
 }
 
+type ApiTLS struct {
+	CertificatePath string `split_words:"true"`
+	PrivateKeyPath  string `split_words:"true"`
+}
+
 // Cors instantiates a new Cors middleware based on the configuration.
 func (c *Api) Cors(debug bool) *cors.Cors {
 	log.Infof("API CORS configuration: %+v", c.CORS)
@@ -80,4 +89,36 @@ func (c *Api) Authentication() (*auth.Jwt, error) {
 	return auth.NewJwt(time.Duration(c.JWT.TTL),
 		key,
 		c.JWT.Issuer)
+}
+
+func (c *Api) Start(handler http.Handler, debug bool) error {
+	log.Infof("Starting API server in port: %d", c.Port)
+	cors := c.Cors(debug)
+	if c.TLS.CertificatePath == "" || c.TLS.PrivateKeyPath == "" {
+		log.Warn("No certificate set for API. Using HTTP")
+		return http.ListenAndServe(fmt.Sprintf(":%d", c.Port), cors.Handler(handler))
+	}
+	return c.StartTLS(cors.Handler(handler))
+}
+
+func (c *Api) StartTLS(handler http.Handler) error {
+	cfg := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		},
+	}
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", c.Port),
+		Handler:      handler,
+		TLSConfig:    cfg,
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+	}
+	log.Infof("Using HTTPS with certificate in path: %s", c.TLS.CertificatePath)
+	return srv.ListenAndServeTLS(c.TLS.CertificatePath, c.TLS.PrivateKeyPath)
 }

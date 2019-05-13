@@ -16,3 +16,6 @@
 
 # GoLand configuration
 .idea
+
+# Test keys and certs
+*.pem
