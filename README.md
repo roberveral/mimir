@@ -35,6 +35,8 @@ export APP_LDAP_NAME_ATTR=gecos
 export APP_MONGO_URL=mongodb://localhost:27017
 export APP_MONGO_DB=oauth
 export APP_OAUTH_PRIVATE_KEY_PATH=rsa_key.pem
+export APP_API_TLS_CERTIFICATE_PATH=https_cert.pem
+export APP_API_TLS_PRIVATE_KEY_PATH=https_key.pem
 
 go run main.go
 ```

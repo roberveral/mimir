@@ -25,7 +25,9 @@ type Api struct {
 	// CORS is the configuration related to the CORS configuration of the
 	// exposed API.
 	CORS ApiCORS
-	TLS  ApiTLS
+	// TLS is the configuration related to the HTTPS configuration of the exposed
+	// API.
+	TLS ApiTLS
 }
 
 // ApiJWT is the configuration related to the authentication tokens in the
@@ -63,9 +65,17 @@ type ApiCORS struct {
 	ExposedHeaders []string `split_words:"true"`
 }
 
+// ApiTLS is the configuration related to the HTTPS configuration of the exposed
+// API.
 type ApiTLS struct {
+	// CertificatePath is the path to the PEM encoded file with the certificate
+	// used for HTTPS connections in the API. If not set, HTTP protocol will
+	// be used.
 	CertificatePath string `split_words:"true"`
-	PrivateKeyPath  string `split_words:"true"`
+	// PrivateKeyPath is the path to the PEM encoded private key of the certificate
+	// used for HTTPS connections in the API. If not set, HTTP protocol will
+	// be used.
+	PrivateKeyPath string `split_words:"true"`
 }
 
 // Cors instantiates a new Cors middleware based on the configuration.
@@ -91,6 +101,8 @@ func (c *Api) Authentication() (*auth.Jwt, error) {
 		c.JWT.Issuer)
 }
 
+// Start starts the HTTP server using the given handler with the server routes, according
+// to the configuration. It adds the cors support and starts the HTTPS server, if set.
 func (c *Api) Start(handler http.Handler, debug bool) error {
 	log.Infof("Starting API server in port: %d", c.Port)
 	cors := c.Cors(debug)
@@ -98,10 +110,11 @@ func (c *Api) Start(handler http.Handler, debug bool) error {
 		log.Warn("No certificate set for API. Using HTTP")
 		return http.ListenAndServe(fmt.Sprintf(":%d", c.Port), cors.Handler(handler))
 	}
-	return c.StartTLS(cors.Handler(handler))
+	return c.startTLS(cors.Handler(handler))
 }
 
-func (c *Api) StartTLS(handler http.Handler) error {
+// startTLS starts the HTTP server using HTTPS using the certificates set in the configuration.
+func (c *Api) startTLS(handler http.Handler) error {
 	cfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
 		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},

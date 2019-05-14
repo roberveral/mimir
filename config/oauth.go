@@ -41,10 +41,9 @@ func (c *OAuth) RSAKey() (*rsa.PrivateKey, error) {
 	if c.PrivateKeyPath == "" {
 		log.Warn("No private key path set. Using random key")
 		return rsa.GenerateKey(rand.Reader, 4096)
-	} else {
-		log.Infof("Loading RSA private key from file: %s", c.PrivateKeyPath)
-		return utils.LoadRSAPrivateKeyFromFile(c.PrivateKeyPath)
 	}
+	log.Infof("Loading RSA private key from file: %s", c.PrivateKeyPath)
+	return utils.LoadRSAPrivateKeyFromFile(c.PrivateKeyPath)
 }
 
 // TokenProvider instantiates a JWT token provider based on the configuration.
