@@ -10,7 +10,19 @@ docker run --name oauth-mongo -d -p 27017:27017 mongo
 docker run --name oauth-ldap -d -p 389:389 -p 636:636 -e LDAP_READONLY_USER=true osixia/openldap:1.2.4
 ```
 
-2. Launch Oauth Authorizaton Server
+2. Generate RSA key to sign OAuth tokens
+
+```bash
+# Generate a private key
+openssl genrsa -f4 -out rsa_key.pem 4096
+# Derive the public key from the private key
+openssl rsa -in rsa_key.pem -outform PEM -pubout -out rsa_pub.pem
+
+# Generate HTTPS certificate
+openssl req -x509 -newkey rsa:4096 -keyout https_key.pem -out https_cert.pem -days 365 -nodes -subj '/CN=localhost'
+```
+
+3. Launch Oauth Authorizaton Server
 
 ```bash
 export APP_API_PORT=8000
@@ -22,11 +34,14 @@ export APP_LDAP_BASE_DN="dc=example,dc=org"
 export APP_LDAP_NAME_ATTR=gecos
 export APP_MONGO_URL=mongodb://localhost:27017
 export APP_MONGO_DB=oauth
+export APP_OAUTH_PRIVATE_KEY_PATH=rsa_key.pem
+export APP_API_TLS_CERTIFICATE_PATH=https_cert.pem
+export APP_API_TLS_PRIVATE_KEY_PATH=https_key.pem
 
 go run main.go
 ```
 
-3. Add users to LDAP to allow authentication
+4. Add users to LDAP to allow authentication
 
 ```bash
 docker exec -ti oauth-ldap ldapadd -x -D "cn=admin,dc=example,dc=org" -w admin -H ldap://localhost -ZZ
