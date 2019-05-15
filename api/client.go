@@ -82,6 +82,14 @@ func (c *Client) GetClient(rw http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	user, _ := utils.GetAuthenticatedUserFromContext(r.Context())
+
+	// Hide secret fields from a user which is not the owner
+	if user != client.Owner {
+		client.ClientSecret = ""
+		client.GrantTypes = nil
+	}
+
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	return json.NewEncoder(rw).Encode(client)
@@ -110,6 +118,8 @@ func clientErrorHandler(err error) int {
 		return http.StatusNotFound
 	case *oauth.UserNotAuthenticatedError:
 		return http.StatusUnauthorized
+	case *oauth.DeleteClientForbiddenError:
+		return http.StatusForbidden
 	default:
 		return http.StatusInternalServerError
 	}

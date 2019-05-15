@@ -62,10 +62,23 @@ components:
           description: URL to the callback used in the Authorization Code flow.
           format: uri
           example: "https://myapplication.example.org/authorize"
+        logo:
+          type: string
+          format: uri
+          description: URL to the Application image logo.
+          example: "https://mycdn.org/logo.png"
+        grant_types:
+          type: array
+          items:
+            type: string
+            enum: ["authorization_code", "password", "client_credentials"]
+          description: The OAuth grant types that the client is allowed to use in order to obtain an access token.
+          example: ["authorization_code"]
       required:
         - name
         - url
         - redirect_uri
+        - grant_types
     
     Client:
       type: object
@@ -78,7 +91,7 @@ components:
           format: uuid
         client_secret:
           type: string
-          description: Randomly generated secret associated to the client, used for exchanging OAuth tokens.
+          description: Randomly generated secret associated to the client, used for exchanging OAuth tokens. Only returned when the request caller is the owner.
           example: as5fsa222vae3ASd5
         name:
           type: string
@@ -94,13 +107,24 @@ components:
           description: URL to the callback used in the Authorization Code flow.
           format: uri
           example: "https://myapplication.example.org/authorize"
+        logo:
+          type: string
+          format: uri
+          description: URL to the Application image logo.
+          example: "https://mycdn.org/logo.png"
+        grant_types:
+          type: array
+          items:
+            type: string
+            enum: ["authorization_code", "password", "client_credentials"]
+          description: The OAuth grant types that the client is allowed to use in order to obtain an access token. Only returned when the request caller is the owner.
+          example: ["authorization_code"]
         owner:
           type: string
           description: User who registered the client.
           example: "jdoe"
       required:
         - client_id
-        - client_secret
         - name
         - url
         - redirect_uri
@@ -113,7 +137,7 @@ components:
       properties:
         code:
           type: string
-          description: Authorization Code sent to the callback so it can be used to obtain an access token. Contents are encrypted so only the Authorization Server can access the token information.
+          description: Authorization Code sent to the callback so it can be used to obtain an access token. Token is encrypted so only the Authorization Server can access the token information.
           example: "eYJasd454vdsfs2awvbpoy4"
         redirect_uri:
           type: string
@@ -147,7 +171,7 @@ components:
           format: uuid
         client_secret:
           type: string
-          description: The client’s secret. This ensures that the request to get the access token is made only from the client. (Authorization Code and Client Credentials Flows - REQUIRED)
+          description: The client’s secret. This ensures that the request to get the access token is made only from the client. (Authorization Code Flow - OPTIONAL, Client Credentials Flow - REQUIRED)
           example: "as5fsa222vae3ASd5"
         username:
           type: string
@@ -157,6 +181,9 @@ components:
           type: string
           description: The user’s password that they entered in the client application. (Password Flow - REQUIRED)
           example: "jdoe"
+        code_verifier:
+          type: string
+          description: The code verifier for the PKCE request that the app originally generated before the authorization request. (Authorization Code Flow - OPTIONAL)
         scope:
           type: string
           example: "email picture"
@@ -185,6 +212,50 @@ components:
         - access_token
         - token_type
         - expires_in
+
+    JWKSet:
+      type: object
+      description: Keys following JWK specification.
+      properties:
+        keys:
+          type: array
+          items:
+            type: object
+            properties:
+              kid:
+                type: string
+                description: The "kid" (key ID) parameter is used to match a specific key.
+                example: "access_token"
+              kty:
+                type: string
+                enum: ["RSA"]
+                description: The "kty" (key type) parameter identifies the cryptographic algorithm family used with the key, such as "RSA" or "EC".
+                example: "RSA"
+              alg:
+                type: string
+                enum: ["RS512"]
+                description: The "alg" (algorithm) parameter identifies the algorithm intended for use with the key.
+                example: "RS512"
+              key_ops:
+                type: array
+                items:
+                  type: string
+                  enum: ["verify"]
+                description: The "key_ops" (key operations) parameter identifies the operation(s) for which the key is intended to be used.
+                example: ["verify"]
+              use:
+                type: string
+                enum: ["sig"]
+                description: The "use" (public key use) parameter identifies the intended use of the public key.
+                example: "sig"
+              "e":
+                type: string
+                description: Values that conform the RSA Public key.
+                example: "AQAB"
+              "n":
+                type: string
+                description: Values that conform the RSA Public key.
+                example: "AQAB-ASDC-cvewvASD545d"
 
     # Error model
     Error:
@@ -284,10 +355,10 @@ paths:
     summary: Represents the collection of clients.
     description: This resource represents the collection of clients registered in the Authorization Server.
     get:
-      summary: Obtains all the visible clients registered in the Authorization Server.
+      summary: Obtains all the clients registered in the Authorization Server.
       description: >
-        This endpoint allows to obtain all the clients registered in the Authorization Server which are visible to
-        the user who performs the call, that is, the clients owned (created) by this user.
+        This endpoint allows to obtain all the clients registered in the Authorization Server which are owned by
+        the user who performs the call, that is, the clients created by this user.
       operationId: getAllClients
       tags: 
         - "Client"
@@ -310,7 +381,8 @@ paths:
         This endpoint allows to register a new client in the Authorization Server. When the client is registered,
         random "client_id" and "client_secret" are generated for the client so it can perform the OAuth Authorization
         flows. The user who performs the client registration are set as owner, so it's the only one who can query the
-        client and its associated secret.
+        client and its associated secret. It's mandatory to specify which OAuth grant types the client is going to use.
+        Clients are not allowed to use other grant types different than the registered ones.
       operationId: registerClient
       tags:
         - "Client"
@@ -328,6 +400,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Client'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         default:
@@ -339,9 +413,8 @@ paths:
       summary: Obtains the client with the given client_id.
       description: >
         This endpoint allows to obtain the information about the client registered with the given
-        client_id. It returns the client_secret, so it can be queried after client registration. To ensure
-        that the user has permission to see the client_secret, only the client owner is allowed to query
-        the client information.
+        client_id. Sensitive information like the 'client_secret' and the 'grant_types' is only returned
+        when the call is made by the client's owner.
       operationId: getClient
       tags: 
         - "Client"
@@ -396,9 +469,18 @@ paths:
         This endpoint performs the first step in the OAuth 2 Authorization Code flow. When a call to this
         endpoint is performed by an authenticated user, it means that the user is authorizing the client
         defined by the client_id to act on his behalf and therefore to obtain an access token.
+
+        https://www.oauth.com/oauth2-servers/access-tokens/authorization-code-request/
         
         The frontend MUST redirect the user to the returned redirect_uri in order to continue with the
         authorization flow.
+
+        The server supports the PKCE Extension so clients which can't keep a secret can obtain an access
+        token by passing a random secret as a code_challenge in the Authorization request which then the
+        server verifies when trying to obtain the access token, identifying that the auhtorization code
+        belongs to the right client.
+
+        https://www.oauth.com/oauth2-servers/pkce/authorization-request/
       operationId: authorizeOAuthClient
       tags: 
         - "OAuth 2.0"
@@ -439,6 +521,30 @@ paths:
             example: "as342fsdf%4"
           description: A client provided string which will be returned to the client in the callback endpoint, and can be used to store session information.
           required: false
+        - in: query
+          name: code_challenge
+          schema:
+            type: string
+            example: "as342fsdf%4"
+          description: >
+            (PKCE Extension) Optional code challenge generated by the client so it can 
+            avoid sending the client_secret to request a token. The client generates a 
+            "code verifier" as a random string and then it sends this code verifier either
+            as a Base64 URL encoded SHA-256 hash or as plain text. This code will be sent
+            again in the token request to ensure that the request comes from the authorized
+            client.
+          required: false
+        - in: query
+          name: code_challenge_method
+          schema:
+            type: string
+            enum: ["S256", "plain"]
+            example: "S256"
+          description: >
+            (PKCE Extension) Optional method for the given code challenge. It can either be
+            'plain' (the client has sent the code verifier) or 'S256' (the client has sent
+            a Base64 URL encoded SHA-256 hash of the code verifier)
+          required: false
       responses:
         '200':
           description: Authorization code generated for the client_id.
@@ -446,6 +552,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OAuthAuthorizeResponse'
+        '400':
+          description: >
+            Either the response_type has an unsupported value, the client doesn't exist or it is
+            not allowed to perform an 'authorization_code' grant type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -459,9 +573,18 @@ paths:
         This endpoint allows a client to request an access token in order to access protected resources.
         Depending on the grant_type, this token can be to act on behalf of a given user or by the client
         itself.
+
+        https://www.oauth.com/oauth2-servers/access-tokens/authorization-code-request/
+        https://www.oauth.com/oauth2-servers/access-tokens/password-grant/
+        https://www.oauth.com/oauth2-servers/access-tokens/client-credentials/
         
+        This endpoint supports the PKCE Extension so clients who can't store a client can obtain an
+        access token.
+
+        https://www.oauth.com/oauth2-servers/pkce/authorization-code-exchange/
+
         The access token is a JWT token signed with the public key of the authorization server and which
-        contain the following information.
+        contains the following information.
           - sub (username or client_id, depending on the entity which holds the permission).
           - cid (client who acts on behalf of the subject).
           - name (name of the authenticated user).
@@ -469,7 +592,8 @@ paths:
           - picture (url to the user profile picture).
           
         Resource servers can verify the token integrity and expiration and get the requesting user from
-        this token.
+        this token. The public key used to sign the token can be obtained from the /oauth/jwks endpoint,
+        with the kid 'access_token'.
       security: []
       operationId: getOAuthToken
       tags: 
@@ -488,9 +612,52 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OAuthTokenResponse'
+        '400':
+          description: >
+            Either the grant_type has an unsupported value, the client doesn't exist, it is
+            not allowed to perform an 'authorization_code' grant type or the request doesn't
+            provide credentials (either by a client_secret or by a code_verifier).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '406':
+          description: The provided authorization_code has already been used.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: The provided authorization_code is not valid for this client_id or redirect_uri.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          $ref: '#/components/responses/UnexpectedFailure'
+  /oauth/jwks:
+    get:
+      summary: Obtains the JWK specification of the keys used to sign tokens.
+      description: >
+        Obtains the JWK (JSON Web Key) set with the keys used to sign access tokens,
+        so resource servers can get it from here in order to validate that the tokens have
+        been issued by the Authorization Server.
+
+        https://tools.ietf.org/html/rfc7517
+      security: []
+      operationId: getJKWS
+      tags: 
+        - "OAuth 2.0"
+      responses:
+        '200':
+          description: Client with the given id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWKSet'
         default:
           $ref: '#/components/responses/UnexpectedFailure'

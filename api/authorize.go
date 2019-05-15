@@ -75,6 +75,8 @@ func authorizeErrorHandler(err error) int {
 		return http.StatusBadRequest
 	case *oauth.UserNotAuthenticatedError:
 		return http.StatusUnauthorized
+	case *oauth.GrantTypeNotAllowedError:
+		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
 	}

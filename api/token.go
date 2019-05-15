@@ -98,6 +98,8 @@ func tokenErrorHandler(err error) int {
 		return http.StatusUnauthorized
 	case *oauth.CredentialsRequiredError:
 		return http.StatusBadRequest
+	case *oauth.GrantTypeNotAllowedError:
+		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
 	}

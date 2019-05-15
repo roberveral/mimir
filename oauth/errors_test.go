@@ -106,3 +106,12 @@ func TestCredentialsRequiredErrorReturnsCorrectReason(t *testing.T) {
 		e.Error(),
 		"Error message should be the expected")
 }
+
+func TestGrantTypeNotAllowedErrorReturnsCorrectReason(t *testing.T) {
+	e := &GrantTypeNotAllowedError{"1", model.PasswordGrantType}
+
+	assert.Equal(t,
+		"Grant type 'password' is not allowed for client '1'",
+		e.Error(),
+		"Error message should be the expected")
+}

@@ -102,3 +102,22 @@ type CredentialsRequiredError struct{}
 func (e *CredentialsRequiredError) Error() string {
 	return "Either client_secret or code_verifier has to be provided in order to obtain a token"
 }
+
+// GrantTypeNotAllowedError is the error returned when the the client is not allowed
+// to use that grant type for obtaining a token.
+type GrantTypeNotAllowedError struct {
+	ClientID  string
+	GrantType model.OAuthGrantType
+}
+
+func (e *GrantTypeNotAllowedError) Error() string {
+	return fmt.Sprintf("Grant type '%s' is not allowed for client '%s'", e.GrantType, e.ClientID)
+}
+
+// DeleteClientForbiddenError is the error returned when a client is deleted by a user
+// who is not the client's owner.
+type DeleteClientForbiddenError struct{}
+
+func (e *DeleteClientForbiddenError) Error() string {
+	return "Only the client owner can perform its deletion"
+}

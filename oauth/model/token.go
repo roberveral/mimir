@@ -46,7 +46,7 @@ type OAuthTokenInput struct {
 
 	// The client’s secret. This ensures that the request to get the access token
 	// is made only from the client.
-	// (Authorization Code and Client Credentials Flows - REQUIRED)
+	// (Authorization Code Flow - OPTIONAL, Client Credentials Flow - REQUIRED)
 	ClientSecret string `json:"client_secret,omitempty"`
 
 	// The user’s username that they entered in the client application.

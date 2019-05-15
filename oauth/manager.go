@@ -125,6 +125,8 @@ func (m *Manager) RegisterClient(ctx context.Context, input *model.ClientInput) 
 		URL:          input.URL,
 		RedirectURI:  input.RedirectURI,
 		Owner:        user,
+		Logo:         input.Logo,
+		GrantTypes:   input.GrantTypes,
 	}
 
 	return m.clientRepository.StoreClient(ctx, client)
@@ -136,6 +138,16 @@ func (m *Manager) DeleteClient(ctx context.Context, clientID string) error {
 	client, err := m.GetClientByID(ctx, clientID)
 	if err != nil {
 		return err
+	}
+
+	user, ok := utils.GetAuthenticatedUserFromContext(ctx)
+	if !ok {
+		return &UserNotAuthenticatedError{}
+	}
+
+	// AUTHORIZATION: only owner can delete a client
+	if user != client.Owner {
+		return &DeleteClientForbiddenError{}
 	}
 
 	return m.clientRepository.DeleteClient(ctx, client)
@@ -152,7 +164,10 @@ func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInpu
 		return nil, err
 	}
 
-	// TODO: check allowed response types for clients?
+	// Check allowed grant types for clients: authorize call required Authorization Code grant type.
+	if !containsGrantType(client.GrantTypes, model.AuthorizationCodeGrantType) {
+		return nil, &GrantTypeNotAllowedError{client.ClientID, model.AuthorizationCodeGrantType}
+	}
 
 	// If missing RedirectURI, use the provided during client registration
 	if input.RedirectURI == "" {
@@ -214,7 +229,10 @@ func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*mod
 		return nil, err
 	}
 
-	// TODO: check allowed grant types for clients?
+	// Check allowed grant types for clients
+	if !containsGrantType(client.GrantTypes, input.GrantType) {
+		return nil, &GrantTypeNotAllowedError{client.ClientID, input.GrantType}
+	}
 
 	// Execute the logic for validating the request and generating a token depending on the grant_type.
 	handler, err := m.getTokenHandler(input.GrantType)
@@ -282,7 +300,7 @@ func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, i
 }
 
 func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input *model.OAuthTokenInput) (*model.OAuthAccessToken, error) {
-	log.Debug("Using Authorization Code flow")
+	log.Debug("Using Authorization Code grant")
 	// Decode and validate authorization code to check if it was issued by the Authorization Server and
 	// it has not expired.
 	code, err := m.authCodeProvider.ValidateCode(input.Code)
@@ -340,7 +358,7 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 }
 
 func (m *Manager) passwordToken(ctx context.Context, client *model.Client, input *model.OAuthTokenInput) (*model.OAuthAccessToken, error) {
-	log.Debug("Using Password flow")
+	log.Debug("Using Password grant")
 	// Check client credentials if secret set, not mandatory.
 	if input.ClientSecret != "" && input.ClientSecret != client.ClientSecret {
 		return nil, &InvalidClientCredentialsError{}
@@ -363,7 +381,7 @@ func (m *Manager) passwordToken(ctx context.Context, client *model.Client, input
 }
 
 func (m *Manager) clientToken(ctx context.Context, client *model.Client, input *model.OAuthTokenInput) (*model.OAuthAccessToken, error) {
-	log.Debug("Using Client Credentials flow")
+	log.Debug("Using Client Credentials grant")
 	// Check client credentials, to ensure that the request comes from the client
 	if input.ClientSecret != client.ClientSecret {
 		return nil, &InvalidClientCredentialsError{}
@@ -377,4 +395,13 @@ func (m *Manager) clientToken(ctx context.Context, client *model.Client, input *
 	}
 
 	return accessToken, nil
+}
+
+func containsGrantType(allowed []model.OAuthGrantType, expected model.OAuthGrantType) bool {
+	for _, v := range allowed {
+		if v == expected {
+			return true
+		}
+	}
+	return false
 }

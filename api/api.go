@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/roberveral/oauth-server/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Action represents a possible action performed by a controller,
@@ -34,11 +36,14 @@ func NewController(eh ErrorHandler) Controller {
 // the actions returns an error, it is mapped to the aproppiate status code.
 func (c *Controller) Perform(a Action) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		user, _ := utils.GetAuthenticatedUserFromContext(r.Context())
+		log.Infof("%s\t\t%s\t\t%s\t\t%s", r.Method, r.RequestURI, r.RemoteAddr, user)
 		if err := a(rw, r); err != nil {
 			statusCode := http.StatusInternalServerError
 			if c.errorHandler != nil {
 				statusCode = c.errorHandler(err)
 			}
+			log.Errorf("Error while processing request: %v. Status Code: %d", err, statusCode)
 			SendErrorResponse(statusCode, rw, err)
 		}
 	})
