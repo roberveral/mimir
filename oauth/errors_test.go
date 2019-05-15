@@ -79,3 +79,12 @@ func TestUsedAuthorizationCodeErrorReturnsCorrectReason(t *testing.T) {
 		e.Error(),
 		"Error message should be the expected")
 }
+
+func TestInvalidUserCredentialsErrorReturnsCorrectReason(t *testing.T) {
+	e := &InvalidUserCredentialsError{}
+
+	assert.Equal(t,
+		"Invalid user credentials",
+		e.Error(),
+		"Error message should be the expected")
+}

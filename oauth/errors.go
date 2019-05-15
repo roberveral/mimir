@@ -78,3 +78,11 @@ type UsedAuthorizationCodeError struct{}
 func (e *UsedAuthorizationCodeError) Error() string {
 	return "The provided authorization code has already been used and it can only be used once"
 }
+
+// InvalidUserCredentialsError is the error returned when the provided user credentials
+// (username/password) doesn't match the registered for the user in the IDP.
+type InvalidUserCredentialsError struct{}
+
+func (e *InvalidUserCredentialsError) Error() string {
+	return "Invalid user credentials"
+}

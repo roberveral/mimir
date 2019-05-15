@@ -15,6 +15,7 @@ import (
 	"github.com/roberveral/oauth-server/oauth/token/jwt"
 
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -76,6 +77,8 @@ func (m *Manager) getTokenHandler(gt model.OAuthGrantType) (tokenHandler, error)
 	// Supported grant types are added to this map
 	tokenHandlers := map[model.OAuthGrantType]tokenHandler{
 		model.AuthorizationCodeGrantType: m.authCodeToken,
+		model.PasswordGrantType:          m.passwordToken,
+		model.ClientCredentialsGrantType: m.clientToken,
 	}
 
 	handler, ok := tokenHandlers[gt]
@@ -142,6 +145,7 @@ func (m *Manager) DeleteClient(ctx context.Context, clientID string) error {
 // authorization to a client to retrieve a token to act on his behalf. This step returns an
 // authorization code which is sent to the client and can be used to obtain an access token.
 func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInput) (*model.OAuthAuthorizeResponse, error) {
+	log.Infof("Processing authorize request of type and client: %s - %s", input.ResponseType, input.ClientID)
 	// Check that the authorized client exists
 	client, err := m.GetClientByID(ctx, input.ClientID)
 	if err != nil {
@@ -150,6 +154,7 @@ func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInpu
 
 	// If missing RedirectURI, use the provided during client registration
 	if input.RedirectURI == "" {
+		log.Warn("No redirect_uri parameter set. Using client registered redirect_uri")
 		input.RedirectURI = client.RedirectURI
 	} else if input.RedirectURI != client.RedirectURI {
 		return nil, &InvalidRedirectURIError{input.RedirectURI, client.ClientID}
@@ -186,6 +191,8 @@ func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInpu
 	}
 	redirectURL.RawQuery = q.Encode()
 
+	log.Infof("Authorization granted to client: %s", input.ClientID)
+
 	response := &model.OAuthAuthorizeResponse{
 		Code:        code,
 		RedirectURI: redirectURL.String(),
@@ -198,6 +205,7 @@ func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInpu
 // user (Resource Owner who has authorized the application) or itself (depending on the grant_type). This
 // step returns an access token which can be used to access resources in the Resource Servers.
 func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*model.OAuthTokenResponse, error) {
+	log.Infof("Processing token request of type and client: %s - %s", input.GrantType, input.ClientID)
 	// Check that the client who requests a token exists.
 	client, err := m.GetClientByID(ctx, input.ClientID)
 	if err != nil {
@@ -223,6 +231,8 @@ func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*mod
 		return nil, err
 	}
 
+	log.Infof("Token generated for client: %s", input.ClientID)
+
 	response := &model.OAuthTokenResponse{
 		AccessToken: encodedToken,
 		TokenType:   model.BearerTokenType,
@@ -236,6 +246,7 @@ func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*mod
 // It generates an authorization code for the authorized client, including all the info required
 // to validate the request to obtain an access token.
 func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, input *model.OAuthAuthorizeInput) (*model.OAuthAuthorizationCode, error) {
+	log.Debug("Using Authorization Code flow")
 	// Retrieve authenticated user (Resource Owner) who authorizes the client to act on
 	// his behalf.
 	user, ok := utils.GetAuthenticatedUserFromContext(ctx)
@@ -255,6 +266,7 @@ func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, i
 }
 
 func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input *model.OAuthTokenInput) (*model.OAuthAccessToken, error) {
+	log.Debug("Using Authorization Code flow")
 	// Decode and validate authorization code to check if it was issued by the Authorization Server and
 	// it has not expired.
 	code, err := m.authCodeProvider.ValidateCode(input.Code)
@@ -297,6 +309,46 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 	// Mark the authorization code as used, so it's rejected for now on.
 	if err = m.authCodeRepository.StoreUsedAuthorizationCode(ctx, code); err != nil {
 		return nil, err
+	}
+
+	return accessToken, nil
+}
+
+func (m *Manager) passwordToken(ctx context.Context, client *model.Client, input *model.OAuthTokenInput) (*model.OAuthAccessToken, error) {
+	log.Debug("Using Password flow")
+	// Check client credentials if secret set, not mandatory.
+	if input.ClientSecret != "" && input.ClientSecret != client.ClientSecret {
+		return nil, &InvalidClientCredentialsError{}
+	}
+
+	// Check that the user credentials are valid in the IDP
+	user, err := m.identityProvider.AuthenticateUser(ctx, input.Username, input.Password)
+	if err != nil {
+		return nil, &InvalidUserCredentialsError{}
+	}
+
+	// Issue access token for the user
+	accessToken := &model.OAuthAccessToken{
+		ClientID:       client.ClientID,
+		ExpirationTime: time.Now().Add(tokenExpirationTime * time.Second),
+		User:           user,
+	}
+
+	return accessToken, nil
+}
+
+func (m *Manager) clientToken(ctx context.Context, client *model.Client, input *model.OAuthTokenInput) (*model.OAuthAccessToken, error) {
+	log.Debug("Using Client Credentials flow")
+	// Check client credentials, to ensure that the request comes from the client
+	if input.ClientSecret != client.ClientSecret {
+		return nil, &InvalidClientCredentialsError{}
+	}
+
+	// Issue access token for the client to act on its own behalf
+	accessToken := &model.OAuthAccessToken{
+		ClientID:       client.ClientID,
+		ExpirationTime: time.Now().Add(tokenExpirationTime * time.Second),
+		User:           nil,
 	}
 
 	return accessToken, nil
