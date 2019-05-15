@@ -41,10 +41,12 @@ func (c *Authorize) Register(r *mux.Router) {
 // continue with the authorization flow.
 func (c *Authorize) AuthorizeOAuthClient(rw http.ResponseWriter, r *http.Request) error {
 	input := &model.OAuthAuthorizeInput{
-		ResponseType: model.OAuthResponseType(r.URL.Query().Get("response_type")),
-		ClientID:     r.URL.Query().Get("client_id"),
-		RedirectURI:  r.URL.Query().Get("redirect_uri"),
-		State:        r.URL.Query().Get("state"),
+		ResponseType:        model.OAuthResponseType(r.URL.Query().Get("response_type")),
+		ClientID:            r.URL.Query().Get("client_id"),
+		RedirectURI:         r.URL.Query().Get("redirect_uri"),
+		State:               r.URL.Query().Get("state"),
+		CodeChallenge:       r.URL.Query().Get("code_challenge"),
+		CodeChallengeMethod: model.OAuthCodeChallengeMethod(r.URL.Query().Get("code_challenge_method")),
 	}
 
 	if err := utils.ValidateStruct(input); err != nil {

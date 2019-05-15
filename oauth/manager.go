@@ -152,6 +152,8 @@ func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInpu
 		return nil, err
 	}
 
+	// TODO: check allowed response types for clients?
+
 	// If missing RedirectURI, use the provided during client registration
 	if input.RedirectURI == "" {
 		log.Warn("No redirect_uri parameter set. Using client registered redirect_uri")
@@ -212,6 +214,8 @@ func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*mod
 		return nil, err
 	}
 
+	// TODO: check allowed grant types for clients?
+
 	// Execute the logic for validating the request and generating a token depending on the grant_type.
 	handler, err := m.getTokenHandler(input.GrantType)
 	if err != nil {
@@ -254,12 +258,24 @@ func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, i
 		return nil, &UserNotAuthenticatedError{}
 	}
 
+	var codeChallenge string
+	// PKCE Extension: if code_challenge is set, get the SHA-256 and store it
+	if input.CodeChallenge != "" {
+		log.Debug("Using PKCE Extension during Authorization")
+		if input.CodeChallengeMethod == model.S256CodeChallengeMethod {
+			codeChallenge = input.CodeChallenge
+		} else {
+			codeChallenge = utils.GenerateSHA256(input.CodeChallenge)
+		}
+	}
+
 	code := &model.OAuthAuthorizationCode{
 		TokenID:        uuid.New().String(),
 		UserID:         user,
 		ClientID:       client.ClientID,
 		RedirectURI:    input.RedirectURI,
 		ExpirationTime: time.Now().Add(codeExpirationTime * time.Second),
+		CodeChallenge:  codeChallenge,
 	}
 
 	return code, nil
@@ -279,9 +295,18 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 		return nil, &AuthorizationCodeConflictError{}
 	}
 
+	if input.ClientSecret == "" && input.CodeVerifier == "" {
+		return nil, &CredentialsRequiredError{}
+	}
+
 	// Check client credentials, to ensure that the request comes from the client
-	if input.ClientSecret != client.ClientSecret {
+	if input.ClientSecret != "" && input.ClientSecret != client.ClientSecret {
 		return nil, &InvalidClientCredentialsError{}
+	}
+
+	// If no secret provider, check PKCE extension code challenge
+	if input.ClientSecret == "" && code.CodeChallenge != utils.GenerateSHA256(input.CodeVerifier) {
+		return nil, &InvalidCodeVerifierError{}
 	}
 
 	// Check if the authorization code has been already used

@@ -59,6 +59,7 @@ func (c *Token) GetOAuthToken(rw http.ResponseWriter, r *http.Request) error {
 		Username:     r.FormValue("username"),
 		Password:     r.FormValue("password"),
 		Scope:        r.FormValue("scope"),
+		CodeVerifier: r.FormValue("code_verifier"),
 	}
 
 	if err := utils.ValidateStruct(input); err != nil {
@@ -91,6 +92,12 @@ func tokenErrorHandler(err error) int {
 		return http.StatusNotAcceptable
 	case *idp.InvalidCredentialsError:
 		return http.StatusUnauthorized
+	case *oauth.InvalidUserCredentialsError:
+		return http.StatusUnauthorized
+	case *oauth.InvalidCodeVerifierError:
+		return http.StatusUnauthorized
+	case *oauth.CredentialsRequiredError:
+		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
 	}

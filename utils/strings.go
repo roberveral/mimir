@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
 	"math/rand"
 	"time"
 )
@@ -28,3 +30,9 @@ func RandString(length int) string {
 }
 
 // https://www.calhoun.io/creating-random-strings-in-go/
+
+// GenerateSHA256 generates the Base64 URL Encoded SHA-256 hash of a given string.
+func GenerateSHA256(s string) string {
+	sha := sha256.Sum256([]byte(s))
+	return base64.URLEncoding.EncodeToString(sha[:])
+}

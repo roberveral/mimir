@@ -60,6 +60,10 @@ type OAuthTokenInput struct {
 	// One or more scope values indicating which parts of the user's account
 	// the client wish to access. (Password and Client Credentials Flows - OPTIONAL)
 	Scope string `json:"scope,omitempty"`
+
+	// The code verifier for the PKCE request, that the app originally generated before
+	// the authorization request. (Authorization Code Flow - OPTIONAL)
+	CodeVerifier string `json:"code_verifier,omitempty"`
 }
 
 // OAuthTokenResponse is the response sent back by the Authorization Server

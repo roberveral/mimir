@@ -75,6 +75,7 @@ func (j *TokenProvider) GenerateCode(authorizationCode *model.OAuthAuthorization
 		},
 		authorizationCode.ClientID,
 		authorizationCode.RedirectURI,
+		authorizationCode.CodeChallenge,
 	}
 	rawToken, err := jwt.SignedAndEncrypted(j.signer, j.encrypter).Claims(claims).CompactSerialize()
 	if err != nil {
@@ -116,6 +117,7 @@ func (j *TokenProvider) ValidateCode(code string) (*model.OAuthAuthorizationCode
 		ClientID:       claims.ClientID,
 		RedirectURI:    claims.RedirectURI,
 		ExpirationTime: claims.Expiry.Time(),
+		CodeChallenge:  claims.CodeChallenge,
 	}, nil
 }
 
@@ -210,8 +212,9 @@ func (j *TokenProvider) GetJwks() (*jwk.Set, error) {
 // as Authorization Code.
 type authorizationCodeClaims struct {
 	*jwt.Claims
-	ClientID    string `json:"cid,omitempty"`
-	RedirectURI string `json:"redirect_uri,omitempty"`
+	ClientID      string `json:"cid,omitempty"`
+	RedirectURI   string `json:"redirect_uri,omitempty"`
+	CodeChallenge string `json:"code_challenge,omitempty"`
 }
 
 // accessTokenClaims defines the struct of the JWT token used as

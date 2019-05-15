@@ -88,3 +88,21 @@ func TestInvalidUserCredentialsErrorReturnsCorrectReason(t *testing.T) {
 		e.Error(),
 		"Error message should be the expected")
 }
+
+func TestInvalidCodeVerifierErrorReturnsCorrectReason(t *testing.T) {
+	e := &InvalidCodeVerifierError{}
+
+	assert.Equal(t,
+		"The provided code verifier is not valid for this authorization code",
+		e.Error(),
+		"Error message should be the expected")
+}
+
+func TestCredentialsRequiredErrorReturnsCorrectReason(t *testing.T) {
+	e := &CredentialsRequiredError{}
+
+	assert.Equal(t,
+		"Either client_secret or code_verifier has to be provided in order to obtain a token",
+		e.Error(),
+		"Error message should be the expected")
+}

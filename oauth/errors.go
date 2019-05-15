@@ -86,3 +86,19 @@ type InvalidUserCredentialsError struct{}
 func (e *InvalidUserCredentialsError) Error() string {
 	return "Invalid user credentials"
 }
+
+// InvalidCodeVerifierError is the error returned when the provided code verifier by
+// the client in a token request does not match the one given in the authorization request.
+type InvalidCodeVerifierError struct{}
+
+func (e *InvalidCodeVerifierError) Error() string {
+	return "The provided code verifier is not valid for this authorization code"
+}
+
+// CredentialsRequiredError is the error returned when the the client doesn't provide
+// a client_secret or a code_verifier in a token request.
+type CredentialsRequiredError struct{}
+
+func (e *CredentialsRequiredError) Error() string {
+	return "Either client_secret or code_verifier has to be provided in order to obtain a token"
+}
