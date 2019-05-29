@@ -88,10 +88,13 @@ type OAuthAccessToken struct {
 	// Unique ID of the client which has access.
 	ClientID string
 
+	// Unique ID of the user which has authorized the application. Empty if the application
+	// acts by itself (Client Credentials grant type)
+	UserID string
+
+	// Optional space separated string indicating the access scopes requested by the client.
+	Scope string
+
 	// Time when the token is no longer valid.
 	ExpirationTime time.Time
-
-	// User that the client is acting on behalf of. It not set,
-	// client is acting by itself (Client Credentials Flow).
-	*User
 }

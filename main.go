@@ -29,34 +29,22 @@ func main() {
 		log.Fatal("Unable to create Mongo connector: ", err)
 		return
 	}
-	rsaKey, err := conf.OAuth.RSAKey()
+	jwtEncoder, err := conf.JWT.Encoder()
 	if err != nil {
-		log.Fatal("Unable to generate key pair: ", err)
+		log.Fatal("Unable to create JWT encoder: ", err)
 		return
 	}
-	tokenProvider, err := conf.OAuth.TokenProvider(rsaKey)
-	if err != nil {
-		log.Fatal("Unable to create Token Provider: ", err)
-		return
-	}
-
 	idp, err := conf.Ldap.IdentityProvider()
 	if err != nil {
 		log.Fatal("Unable to create LDAP connector: ", err)
 		return
 	}
 
-	oauthManager := conf.OAuth.Manager(idp, store, tokenProvider)
+	oauthManager := conf.OAuth.Manager(idp, store, jwtEncoder)
 
 	authentication, err := conf.API.Authentication()
 	if err != nil {
 		log.Fatal("Unable to configure API authentication: ", err)
-		return
-	}
-
-	jwks, err := tokenProvider.GetJwks()
-	if err != nil {
-		log.Fatal("Unable to prepare JWK set: ", err)
 		return
 	}
 
@@ -68,7 +56,7 @@ func main() {
 	api.NewClient(oauthManager).Register(ar)
 	api.NewAuthorize(oauthManager).Register(ar)
 	api.NewToken(oauthManager).Register(uar)
-	api.NewJwks(jwks).Register(uar)
+	api.NewJwks(jwtEncoder.JWKS()).Register(uar)
 	ar.Use(authentication.Handler)
 
 	log.Fatal(conf.API.Start(r, conf.Debug))

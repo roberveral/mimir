@@ -7,12 +7,12 @@ import (
 
 	"github.com/roberveral/oauth-server/utils"
 
+	"github.com/roberveral/oauth-server/jwt"
 	"github.com/roberveral/oauth-server/oauth/idp"
 	"github.com/roberveral/oauth-server/oauth/model"
 	"github.com/roberveral/oauth-server/oauth/repository"
 	"github.com/roberveral/oauth-server/oauth/repository/mongodb"
 	"github.com/roberveral/oauth-server/oauth/token"
-	"github.com/roberveral/oauth-server/oauth/token/jwt"
 
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -34,22 +34,20 @@ type tokenHandler func(context.Context, *model.Client, *model.OAuthTokenInput) (
 // Manager contains all the OAuth 2 core logic. It allows to manage clients,
 // to authorize a client and to obtain access tokens.
 type Manager struct {
-	clientRepository    repository.ClientRepository
-	identityProvider    idp.IdentityProvider
-	authCodeRepository  repository.AuthorizationCodeRepository
-	authCodeProvider    token.AuthorizationCodeProvider
-	accessTokenProvider token.AccessTokenProvider
+	clientRepository   repository.ClientRepository
+	identityProvider   idp.IdentityProvider
+	authCodeRepository repository.AuthorizationCodeRepository
+	tokenEncoder       token.Encoder
 }
 
 // NewManager creates a new OAuth Manager which uses MongoDB as persistence and JWT as token
 // provider.
-func NewManager(identityProvider idp.IdentityProvider, store *mongodb.Store, provider *jwt.TokenProvider) *Manager {
+func NewManager(identityProvider idp.IdentityProvider, store *mongodb.Store, jwtEncoder jwt.Encoder, host string) *Manager {
 	return &Manager{
-		clientRepository:    store,
-		identityProvider:    identityProvider,
-		authCodeRepository:  store,
-		authCodeProvider:    provider,
-		accessTokenProvider: provider,
+		clientRepository:   store,
+		identityProvider:   identityProvider,
+		authCodeRepository: store,
+		tokenEncoder:       token.NewJwt(jwtEncoder, host),
 	}
 }
 
@@ -190,7 +188,7 @@ func (m *Manager) Authorize(ctx context.Context, input *model.OAuthAuthorizeInpu
 
 	// Encode the token using the defined provider. The authorization code must be encoded
 	// in a way that only the Authorization Server can modify or decode the contents.
-	code, err := m.authCodeProvider.GenerateCode(authCode)
+	code, err := m.tokenEncoder.EncodeAuthorizationCode(authCode)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +246,7 @@ func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*mod
 	// Encode the token using the defined provider. Access tokens must be encoded in a way that
 	// they can't be modified but every one should be able to decode and validate the contents.
 	// (Should be signed by the Authorization Server)
-	encodedToken, err := m.accessTokenProvider.GenerateToken(accessToken)
+	encodedToken, err := m.tokenEncoder.EncodeAccessToken(accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -292,6 +290,7 @@ func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, i
 		UserID:         user,
 		ClientID:       client.ClientID,
 		RedirectURI:    input.RedirectURI,
+		Scope:          input.Scope,
 		ExpirationTime: time.Now().Add(codeExpirationTime * time.Second),
 		CodeChallenge:  codeChallenge,
 	}
@@ -303,7 +302,7 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 	log.Debug("Using Authorization Code grant")
 	// Decode and validate authorization code to check if it was issued by the Authorization Server and
 	// it has not expired.
-	code, err := m.authCodeProvider.ValidateCode(input.Code)
+	code, err := m.tokenEncoder.DecodeAuthorizationCode(input.Code)
 	if err != nil {
 		return nil, err
 	}
@@ -345,8 +344,9 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 
 	accessToken := &model.OAuthAccessToken{
 		ClientID:       client.ClientID,
+		UserID:         user.UserID,
+		Scope:          code.Scope,
 		ExpirationTime: time.Now().Add(tokenExpirationTime * time.Second),
-		User:           user,
 	}
 
 	// Mark the authorization code as used, so it's rejected for now on.
@@ -373,8 +373,9 @@ func (m *Manager) passwordToken(ctx context.Context, client *model.Client, input
 	// Issue access token for the user
 	accessToken := &model.OAuthAccessToken{
 		ClientID:       client.ClientID,
+		UserID:         user.UserID,
+		Scope:          input.Scope,
 		ExpirationTime: time.Now().Add(tokenExpirationTime * time.Second),
-		User:           user,
 	}
 
 	return accessToken, nil
@@ -390,8 +391,8 @@ func (m *Manager) clientToken(ctx context.Context, client *model.Client, input *
 	// Issue access token for the client to act on its own behalf
 	accessToken := &model.OAuthAccessToken{
 		ClientID:       client.ClientID,
+		Scope:          input.Scope,
 		ExpirationTime: time.Now().Add(tokenExpirationTime * time.Second),
-		User:           nil,
 	}
 
 	return accessToken, nil

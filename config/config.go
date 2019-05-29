@@ -23,6 +23,8 @@ type App struct {
 	// OAuth is the configuration related to the OAuth core logic of the
 	// Authorization Server.
 	OAuth OAuth
+	// JWT is the configuration related to JWT tokens issued in the server.
+	JWT JWT
 }
 
 // TTL is an alias for time.Duration to add decode capabilities from

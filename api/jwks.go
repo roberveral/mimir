@@ -5,19 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/lestrrat-go/jwx/jwk"
+	"gopkg.in/square/go-jose.v2"
 )
 
 // Jwks is the controller used to expose the keys used by the Authorization Server to
 // sign tokens.
 type Jwks struct {
 	Controller
-	jwks *jwk.Set
+	jwks *jose.JSONWebKeySet
 }
 
 // NewJwks creates a new Jwks controller, which exposes and endpoint to retrieve
 // the server JWK set.
-func NewJwks(jwks *jwk.Set) *Jwks {
+func NewJwks(jwks *jose.JSONWebKeySet) *Jwks {
 	return &Jwks{
 		Controller: NewController(nil),
 		jwks:       jwks,
