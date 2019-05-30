@@ -123,16 +123,16 @@ func (j *jwtTokenEncoder) DecodeAuthorizationCode(code string) (*model.OAuthAuth
 // as Authorization Code.
 type authorizationCodeClaims struct {
 	*jose.Claims
-	ClientID      string `json:"aud,omitempty"`
-	RedirectURI   string `json:"redirect_uri,omitempty"`
-	Scope         string `json:"scope,omitempty"`
-	CodeChallenge string `json:"code_challenge,omitempty"`
+	ClientID      string   `json:"aud,omitempty"`
+	RedirectURI   string   `json:"redirect_uri,omitempty"`
+	Scope         []string `json:"scope,omitempty"`
+	CodeChallenge string   `json:"code_challenge,omitempty"`
 }
 
 // accessTokenClaims defines the struct of the JWT token used as
 // Access Token.
 type accessTokenClaims struct {
 	*jose.Claims
-	ClientID string `json:"aud,omitempty"`
-	Scope    string `json:"scope,omitempty"`
+	ClientID string   `json:"aud,omitempty"`
+	Scope    []string `json:"scope,omitempty"`
 }
