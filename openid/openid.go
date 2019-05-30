@@ -1,8 +1,12 @@
 package openid
 
 import (
+	"context"
+	"time"
+
 	"github.com/roberveral/oauth-server/jwt"
 	"github.com/roberveral/oauth-server/oauth/idp"
+	"github.com/roberveral/oauth-server/oauth/model"
 )
 
 // IDToken is a security token that contains Claims about the Authentication of an End-User
@@ -67,7 +71,7 @@ type Claims struct {
 	// True if the End-User's phone number has been verified; otherwise false.
 	PhoneNumberVerified bool `json:"phone_number_verified,omitempty"`
 	// End-User's preferred postal address.
-	Address AddressClaim `json:"address,omitempty"`
+	Address *AddressClaim `json:"address,omitempty"`
 	// Time the End-User's information was last updated.
 	// Its value is a JSON number representing the number of seconds from 1970-01-01T0:0:0Z as measured in UTC until the date/time.
 	UpdatedAt int64 `json:"updated_at,omitempty"`
@@ -90,8 +94,117 @@ type AddressClaim struct {
 	Country string `json:"country,omitempty"`
 }
 
+// Declaration of the different scopes supported by the OpenID Connect spec
+const (
+	OpenIDScope  = "openid"
+	EmailScope   = "email"
+	ProfileScope = "profile"
+	AddressScope = "address"
+	PhoneScope   = "phone"
+)
+
+// Manager allows to obtain authentication information about a user according
+// to the OpenID Connect specification.
 type Manager struct {
 	jwtEncoder jwt.Encoder
 	issuer     string
 	idp        idp.IdentityProvider
+}
+
+// NewManager creates a new Manager which uses the given encoder for serializing
+// ID Tokens, sets the given issuer and fetches user data from the given IDP.
+func NewManager(jwtEncoder jwt.Encoder, issuer string, idp idp.IdentityProvider) *Manager {
+	return &Manager{
+		jwtEncoder: jwtEncoder,
+		issuer:     issuer,
+		idp:        idp,
+	}
+}
+
+// UserInfo obtains the claims with the information about the user who granted permissions
+// with the given OAuth access token.
+// The returned claims depends on the specified scopes (what info the user allowed to share),
+// according to the OpenID Connect specification.
+func (m *Manager) UserInfo(ctx context.Context, accessToken *model.OAuthAccessToken) (*Claims, error) {
+	scopeSet := model.NewScopeSet(accessToken.Scope)
+
+	// Check that the scope 'openid' is granted, and therefore is a valid OpenID Connect
+	// request
+	if !scopeSet.Contains(OpenIDScope) {
+		return nil, &ScopeNotAllowedError{}
+	}
+
+	// Get authenticated user information, so the client can act on his behalf
+	user, err := m.idp.GetUserByID(ctx, accessToken.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	claims := &Claims{}
+
+	// Always set the subject as the user ID
+	claims.Subject = user.UserID
+
+	if scopeSet.Contains(EmailScope) {
+		// Scope 'email': email, email_verified
+		claims.Email = user.Email
+	}
+
+	if scopeSet.Contains(ProfileScope) {
+		// Scope 'profile': name, family_name, given_name, middle_name, nickname,
+		// preferred_username, profile, picture, website, gender, birthdate, zoneinfo,
+		// locale, updated_at
+		claims.Name = user.Name
+		claims.Picture = user.PictureURI
+	}
+
+	if scopeSet.Contains(AddressScope) {
+		// Scope 'address': address
+	}
+
+	if scopeSet.Contains(PhoneScope) {
+		// Scope 'phone': phone_number, phone_number_verified
+	}
+
+	return claims, nil
+}
+
+// IdentityToken obtains an ID Token with the information about the user who granted permissions
+// with the given OAuth access token.
+// The returned claims depends on the specified scopes (what info the user allowed to share),
+// according to the OpenID Connect specification.
+func (m *Manager) IdentityToken(ctx context.Context, accessToken *model.OAuthAccessToken) (*IDToken, error) {
+	claims, err := m.UserInfo(ctx, accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &IDToken{
+		Claims:         *claims,
+		Issuer:         m.issuer,
+		Audience:       accessToken.ClientID,
+		ExpirationTime: accessToken.ExpirationTime.Unix(),
+		IssuedAt:       time.Now().Unix(),
+	}, nil
+}
+
+// IdentityTokenSerialize obtains an ID Token with the information about the user who granted permissions
+// with the given OAuth access token, serialized as a signed JWT.
+// The returned claims depends on the specified scopes (what info the user allowed to share),
+// according to the OpenID Connect specification.
+func (m *Manager) IdentityTokenSerialize(ctx context.Context, accessToken *model.OAuthAccessToken) (string, error) {
+	token, err := m.IdentityToken(ctx, accessToken)
+	if err != nil {
+		return "", err
+	}
+
+	return m.jwtEncoder.Signed(token)
+}
+
+// ScopeNotAllowedError is the error returned when trying to obtain the OpenID user
+// information without allowing the scope 'openid'.
+type ScopeNotAllowedError struct{}
+
+func (e *ScopeNotAllowedError) Error() string {
+	return "Scope 'openid' is not granted to the given access_token"
 }

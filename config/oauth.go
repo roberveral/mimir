@@ -19,7 +19,7 @@ type OAuth struct {
 	AuthorizationCodeTTL TTL `default:"30s"`
 	// Issuer is the issuer set in access tokens.
 	// Default value is: "localhost:8000"
-	Issuer string `default:"localhost:8000"`
+	Issuer string `default:"http://localhost:8000"`
 }
 
 // Manager instantiates a new OAuth manager based on the configuration.
