@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/roberveral/oauth-server/oauth"
@@ -58,7 +59,7 @@ func (c *Token) GetOAuthToken(rw http.ResponseWriter, r *http.Request) error {
 		ClientSecret: r.FormValue("client_secret"),
 		Username:     r.FormValue("username"),
 		Password:     r.FormValue("password"),
-		Scope:        r.FormValue("scope"),
+		Scope:        strings.Fields(r.FormValue("scope")),
 		CodeVerifier: r.FormValue("code_verifier"),
 	}
 

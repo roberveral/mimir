@@ -59,7 +59,7 @@ type OAuthTokenInput struct {
 
 	// One or more scope values indicating which parts of the user's account
 	// the client wish to access. (Password and Client Credentials Flows - OPTIONAL)
-	Scope string `json:"scope,omitempty"`
+	Scope []string `json:"scope,omitempty"`
 
 	// The code verifier for the PKCE request, that the app originally generated before
 	// the authorization request. (Authorization Code Flow - OPTIONAL)
@@ -93,7 +93,7 @@ type OAuthAccessToken struct {
 	UserID string
 
 	// Optional space separated string indicating the access scopes requested by the client.
-	Scope string
+	Scope []string
 
 	// Time when the token is no longer valid.
 	ExpirationTime time.Time

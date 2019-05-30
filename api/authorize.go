@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/roberveral/oauth-server/oauth"
@@ -45,6 +46,7 @@ func (c *Authorize) AuthorizeOAuthClient(rw http.ResponseWriter, r *http.Request
 		ClientID:            r.URL.Query().Get("client_id"),
 		RedirectURI:         r.URL.Query().Get("redirect_uri"),
 		State:               r.URL.Query().Get("state"),
+		Scope:               strings.Fields(r.URL.Query().Get("scope")),
 		CodeChallenge:       r.URL.Query().Get("code_challenge"),
 		CodeChallengeMethod: model.OAuthCodeChallengeMethod(r.URL.Query().Get("code_challenge_method")),
 	}
