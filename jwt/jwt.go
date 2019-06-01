@@ -57,7 +57,7 @@ func NewEncoder(privateKey *rsa.PrivateKey, keyID string) (Encoder, error) {
 	// signature using the Authorization Server's public key.
 	signer, err := jose.NewSigner(
 		jose.SigningKey{
-			Algorithm: jose.RS512,
+			Algorithm: jose.RS256,
 			Key:       encoder.privateKeyJWKSig(),
 		},
 		(&jose.SignerOptions{}).WithType("JWT"))
@@ -161,7 +161,7 @@ func (je *jwtEncoder) privateKeyJWKSig() *jose.JSONWebKey {
 	return &jose.JSONWebKey{
 		Key:       je.PrivateKey,
 		KeyID:     je.KeyID,
-		Algorithm: string(jose.RS512),
+		Algorithm: string(jose.RS256),
 		Use:       "sig",
 	}
 }
@@ -170,7 +170,7 @@ func (je *jwtEncoder) publicKeyJWKSig() *jose.JSONWebKey {
 	return &jose.JSONWebKey{
 		Key:       &je.PrivateKey.PublicKey,
 		KeyID:     je.KeyID,
-		Algorithm: string(jose.RS512),
+		Algorithm: string(jose.RS256),
 		Use:       "sig",
 	}
 }

@@ -56,7 +56,7 @@ func main() {
 	api.NewClient(oauthManager).Register(ar)
 	api.NewAuthorize(oauthManager).Register(ar)
 	api.NewToken(oauthManager).Register(uar)
-	api.NewJwks(jwtEncoder.JWKS()).Register(uar)
+	api.NewDiscovery(oauthManager).Register(r)
 	ar.Use(authentication.Handler)
 
 	log.Fatal(conf.API.Start(r, conf.Debug))

@@ -94,6 +94,36 @@ type AddressClaim struct {
 	Country string `json:"country,omitempty"`
 }
 
+// ProviderMetadata describes the configuration of OpenID Providers.
+type ProviderMetadata struct {
+	// URL using the https scheme with no query or fragment component that the OP asserts as its Issuer Identifier.
+	Issuer string `json:"issuer"`
+	// URL of the OP's OAuth 2.0 Authorization Endpoint.
+	AuthorizationEndpoint string `json:"authorization_endpoint"`
+	// URL of the OP's OAuth 2.0 Token Endpoint.
+	TokenEndpoint string `json:"token_endpoint,omitempty"`
+	// URL of the OP's UserInfo Endpoint.
+	UserInfoEndpoint string `json:"userinfo_endpoint,omitempty"`
+	// URL of the OP's JSON Web Key Set document.
+	JwksURI string `json:"jwks_uri"`
+	// URL of the OP's Dynamic Client Registration Endpoint.
+	RegistrationEndpoint string `json:"registration_endpoint,omitempty"`
+	// JSON array containing a list of the OAuth 2.0 [RFC6749] scope values that this server supports.
+	ScopesSupported []string `json:"scopes_supported,omitempty"`
+	// JSON array containing a list of the OAuth 2.0 response_type values that this OP supports.
+	ResponseTypesSupported []string `json:"response_types_supported"`
+	// JSON array containing a list of the OAuth 2.0 Grant Type values that this OP supports.
+	GrantTypesSupported []string `json:"grant_types_supported,omitempty"`
+	// JSON array containing a list of the JWS signing algorithms (alg values) supported by the
+	// OP for the ID Token to encode the Claims in a JWT.
+	IDTokenSigningAlgValuesSupported []string `json:"id_token_signing_alg_values_supported,omitempty"`
+	// JSON array containing a list of Client Authentication methods supported by this Token Endpoint.
+	TokenEndpointAuthMethodsSupported []string `json:"token_endpoint_auth_methods_supported,omitempty"`
+	// JSON array containing the list of code_challenge_method supported by the authorization endpoint
+	// for PKCE extension.
+	CodeChallengeMethodsSupported []string `json:"code_challenge_methods_supported,omitempty"`
+}
+
 // Declaration of the different scopes supported by the OpenID Connect spec
 const (
 	OpenIDScope  = "openid"
@@ -103,20 +133,28 @@ const (
 	PhoneScope   = "phone"
 )
 
-// Manager allows to obtain authentication information about a user according
+// Declaration of the different token authentication methods.
+const (
+	ClientSecretPostTokenAuthMethod  = "client_secret_post"
+	ClientSecretBasicTokenAuthMethod = "client_secret_basic"
+	ClientSecretJWTTokenAuthMethod   = "client_secret_jwt"
+	PrivateKeyJWTTokenAuthMethod     = "private_key_jwt"
+)
+
+// Provider allows to obtain authentication information about a user according
 // to the OpenID Connect specification.
-type Manager struct {
-	jwtEncoder jwt.Encoder
-	issuer     string
+type Provider struct {
+	Metadata   *ProviderMetadata
+	JwtEncoder jwt.Encoder
 	idp        idp.IdentityProvider
 }
 
-// NewManager creates a new Manager which uses the given encoder for serializing
+// NewProvider creates a new Provider which uses the given encoder for serializing
 // ID Tokens, sets the given issuer and fetches user data from the given IDP.
-func NewManager(jwtEncoder jwt.Encoder, issuer string, idp idp.IdentityProvider) *Manager {
-	return &Manager{
-		jwtEncoder: jwtEncoder,
-		issuer:     issuer,
+func NewProvider(metadata *ProviderMetadata, jwtEncoder jwt.Encoder, idp idp.IdentityProvider) *Provider {
+	return &Provider{
+		JwtEncoder: jwtEncoder,
+		Metadata:   metadata,
 		idp:        idp,
 	}
 }
@@ -125,7 +163,7 @@ func NewManager(jwtEncoder jwt.Encoder, issuer string, idp idp.IdentityProvider)
 // with the given OAuth access token.
 // The returned claims depends on the specified scopes (what info the user allowed to share),
 // according to the OpenID Connect specification.
-func (m *Manager) UserInfo(ctx context.Context, accessToken *model.OAuthAccessToken) (*Claims, error) {
+func (m *Provider) UserInfo(ctx context.Context, accessToken *model.OAuthAccessToken) (*Claims, error) {
 	scopeSet := model.NewScopeSet(accessToken.Scope)
 
 	// Check that the scope 'openid' is granted, and therefore is a valid OpenID Connect
@@ -173,7 +211,7 @@ func (m *Manager) UserInfo(ctx context.Context, accessToken *model.OAuthAccessTo
 // with the given OAuth access token.
 // The returned claims depends on the specified scopes (what info the user allowed to share),
 // according to the OpenID Connect specification.
-func (m *Manager) IdentityToken(ctx context.Context, accessToken *model.OAuthAccessToken) (*IDToken, error) {
+func (m *Provider) IdentityToken(ctx context.Context, accessToken *model.OAuthAccessToken) (*IDToken, error) {
 	claims, err := m.UserInfo(ctx, accessToken)
 	if err != nil {
 		return nil, err
@@ -181,7 +219,7 @@ func (m *Manager) IdentityToken(ctx context.Context, accessToken *model.OAuthAcc
 
 	return &IDToken{
 		Claims:         *claims,
-		Issuer:         m.issuer,
+		Issuer:         m.Metadata.Issuer,
 		Audience:       accessToken.ClientID,
 		ExpirationTime: accessToken.ExpirationTime.Unix(),
 		IssuedAt:       time.Now().Unix(),
@@ -192,13 +230,13 @@ func (m *Manager) IdentityToken(ctx context.Context, accessToken *model.OAuthAcc
 // with the given OAuth access token, serialized as a signed JWT.
 // The returned claims depends on the specified scopes (what info the user allowed to share),
 // according to the OpenID Connect specification.
-func (m *Manager) IdentityTokenSerialize(ctx context.Context, accessToken *model.OAuthAccessToken) (string, error) {
+func (m *Provider) IdentityTokenSerialize(ctx context.Context, accessToken *model.OAuthAccessToken) (string, error) {
 	token, err := m.IdentityToken(ctx, accessToken)
 	if err != nil {
 		return "", err
 	}
 
-	return m.jwtEncoder.Signed(token)
+	return m.JwtEncoder.Signed(token)
 }
 
 // ScopeNotAllowedError is the error returned when trying to obtain the OpenID user

@@ -39,18 +39,18 @@ type Manager struct {
 	identityProvider   idp.IdentityProvider
 	authCodeRepository repository.AuthorizationCodeRepository
 	tokenEncoder       token.Encoder
-	openidManager      *openid.Manager
+	OpenIDProvider     *openid.Provider
 }
 
 // NewManager creates a new OAuth Manager which uses MongoDB as persistence and JWT as token
 // provider.
-func NewManager(identityProvider idp.IdentityProvider, store *mongodb.Store, jwtEncoder jwt.Encoder, host string) *Manager {
+func NewManager(identityProvider idp.IdentityProvider, store *mongodb.Store, jwtEncoder jwt.Encoder, openidMetadata *openid.ProviderMetadata) *Manager {
 	return &Manager{
 		clientRepository:   store,
 		identityProvider:   identityProvider,
 		authCodeRepository: store,
-		tokenEncoder:       token.NewJwt(jwtEncoder, host),
-		openidManager:      openid.NewManager(jwtEncoder, host, identityProvider),
+		tokenEncoder:       token.NewJwt(jwtEncoder, openidMetadata.Issuer),
+		OpenIDProvider:     openid.NewProvider(openidMetadata, jwtEncoder, identityProvider),
 	}
 }
 
@@ -265,7 +265,7 @@ func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*mod
 	// OPENID CONNECT: if scope 'openid' and user defined, include and IDToken in the response
 	if model.NewScopeSet(accessToken.Scope).Contains(openid.OpenIDScope) && accessToken.UserID != "" {
 		log.Debugf("OpenID Connect request with scopes: %v. Generating ID Token", accessToken.Scope)
-		idToken, err := m.openidManager.IdentityTokenSerialize(ctx, accessToken)
+		idToken, err := m.OpenIDProvider.IdentityTokenSerialize(ctx, accessToken)
 		if err != nil {
 			return nil, err
 		}
