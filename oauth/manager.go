@@ -405,6 +405,11 @@ func (m *Manager) clientToken(ctx context.Context, client *model.Client, input *
 	return accessToken, nil
 }
 
+// ValidateAccessToken decodes and ensures that the given access token is valid (has not expired).
+func (m *Manager) ValidateAccessToken(token string) (*model.OAuthAccessToken, error) {
+	return m.tokenEncoder.DecodeAccessToken(token)
+}
+
 func containsGrantType(allowed []model.OAuthGrantType, expected model.OAuthGrantType) bool {
 	for _, v := range allowed {
 		if v == expected {
