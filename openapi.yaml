@@ -483,7 +483,7 @@ paths:
         https://www.oauth.com/oauth2-servers/pkce/authorization-request/
       operationId: authorizeOAuthClient
       tags: 
-        - "OAuth 2.0"
+        - "OAuth"
       parameters:
         - in: query
           name: response_type
@@ -597,7 +597,7 @@ paths:
       security: []
       operationId: getOAuthToken
       tags: 
-        - "OAuth 2.0"
+        - "OAuth"
       requestBody:
         description: Definition of the client to register.
         required: true
@@ -651,7 +651,7 @@ paths:
       security: []
       operationId: getJKWS
       tags: 
-        - "OAuth 2.0"
+        - "OAuth"
       responses:
         '200':
           description: Client with the given id.

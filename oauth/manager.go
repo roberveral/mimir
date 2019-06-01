@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/roberveral/oauth-server/openid"
 	"github.com/roberveral/oauth-server/utils"
 
 	"github.com/roberveral/oauth-server/jwt"
@@ -38,16 +39,18 @@ type Manager struct {
 	identityProvider   idp.IdentityProvider
 	authCodeRepository repository.AuthorizationCodeRepository
 	tokenEncoder       token.Encoder
+	OpenIDProvider     *openid.Provider
 }
 
 // NewManager creates a new OAuth Manager which uses MongoDB as persistence and JWT as token
 // provider.
-func NewManager(identityProvider idp.IdentityProvider, store *mongodb.Store, jwtEncoder jwt.Encoder, host string) *Manager {
+func NewManager(identityProvider idp.IdentityProvider, store *mongodb.Store, jwtEncoder jwt.Encoder, openidMetadata *openid.ProviderMetadata) *Manager {
 	return &Manager{
 		clientRepository:   store,
 		identityProvider:   identityProvider,
 		authCodeRepository: store,
-		tokenEncoder:       token.NewJwt(jwtEncoder, host),
+		tokenEncoder:       token.NewJwt(jwtEncoder, openidMetadata.Issuer),
+		OpenIDProvider:     openid.NewProvider(openidMetadata, jwtEncoder, identityProvider),
 	}
 }
 
@@ -259,6 +262,16 @@ func (m *Manager) Token(ctx context.Context, input *model.OAuthTokenInput) (*mod
 		ExpiresIn:   tokenExpirationTime,
 	}
 
+	// OPENID CONNECT: if scope 'openid' and user defined, include and IDToken in the response
+	if model.NewScopeSet(accessToken.Scope).Contains(openid.OpenIDScope) && accessToken.UserID != "" {
+		log.Debugf("OpenID Connect request with scopes: %v. Generating ID Token", accessToken.Scope)
+		idToken, err := m.OpenIDProvider.IdentityTokenSerialize(ctx, accessToken)
+		if err != nil {
+			return nil, err
+		}
+		response.IDToken = idToken
+	}
+
 	return response, nil
 }
 
@@ -336,15 +349,9 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 		return nil, &UsedAuthorizationCodeError{}
 	}
 
-	// Get user (Resource Owner) information, so the client can act on his behalf
-	user, err := m.identityProvider.GetUserByID(ctx, code.UserID)
-	if err != nil {
-		return nil, err
-	}
-
 	accessToken := &model.OAuthAccessToken{
 		ClientID:       client.ClientID,
-		UserID:         user.UserID,
+		UserID:         code.UserID,
 		Scope:          code.Scope,
 		ExpirationTime: time.Now().Add(tokenExpirationTime * time.Second),
 	}
@@ -396,6 +403,11 @@ func (m *Manager) clientToken(ctx context.Context, client *model.Client, input *
 	}
 
 	return accessToken, nil
+}
+
+// ValidateAccessToken decodes and ensures that the given access token is valid (has not expired).
+func (m *Manager) ValidateAccessToken(token string) (*model.OAuthAccessToken, error) {
+	return m.tokenEncoder.DecodeAccessToken(token)
 }
 
 func containsGrantType(allowed []model.OAuthGrantType, expected model.OAuthGrantType) bool {
