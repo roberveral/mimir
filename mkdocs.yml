@@ -1,0 +1,40 @@
+# Project information
+site_name: 'OAuth Server'
+site_description: 'An OAuth Server implementation in Golang'
+site_author: 'Rober Veral'
+
+# Repository
+repo_name: 'roberveral/oauth-server'
+repo_url: 'https://github.com/roberveral/oauth-server'
+
+# Copyright
+copyright: 'Copyright &copy; 2019 Roberto Veral'
+
+# Configuration
+theme:
+  name: 'material'
+  language: 'en'
+  palette:
+    primary: 'indigo'
+    accent: 'indigo'
+  font:
+    text: 'Roboto'
+    code: 'Roboto Mono'
+  logo:
+    icon: 'lock'
+
+# Customization
+extra:
+  social:
+    - type: 'github'
+      link: 'https://github.com/roberveral'
+    - type: 'twitter'
+      link: 'https://twitter.com/roberveral'
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
