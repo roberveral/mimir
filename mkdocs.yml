@@ -3,6 +3,11 @@ site_name: 'OAuth Server'
 site_description: 'An OAuth Server implementation in Golang'
 site_author: 'Rober Veral'
 
+nav:
+  - Home: index.md
+  - "OAuth for Server-side web applications": oauth2webserver.md
+  - "OAuth for Mobile, Desktop and Single-page applications": oauth2installedapps.md
+
 # Repository
 repo_name: 'roberveral/oauth-server'
 repo_url: 'https://github.com/roberveral/oauth-server'
