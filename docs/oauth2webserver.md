@@ -24,6 +24,8 @@ an access token to act on the user's behalf in front of a certain Resource Serve
 In order to use this flow, the application must be registered as a client in the OAuth Server to obtain
 client credentials.
 
+The client needs to declare that it wants to use the `authorization_code` flow.
+
 ### Step 1: Obtain an authorization code
 
 From your application, you have to redirect the user to the OAuth Server's authorization URL, setting the
@@ -43,7 +45,7 @@ Parameter | Description | Required
 **response_type** | Indicates that the client expects to receive an authorization code. In this flow is always `code` | Yes
 **client_id** | The client_id received when the application was registered. | Yes
 **redirect_uri** | Indicates the URI to return the user to after authorization is complete. This URL of the application will receive the authorization code on user's authorization. It **MUST** match the one given during client registration. | Yes
-**scope** | One or more space-delimited scope values indicating which parts of the user's account the client wish to access. If you want to obtain authentication info using OpenID Connect you should place the proper scopes here. | No
+**scope** | One or more space-delimited scope values indicating which parts of the user's account the client wish to access. If you want to obtain authentication info using [OpenID Connect] you should place the proper scopes here. | No
 **state** | A client provided value which will be returned to the client in the callback endpoint, and can be used to store session information. | No
 
 Example:
@@ -167,3 +169,4 @@ If you still have doubts about how this flow works, you can obtain more (and bet
 - <https://oauth.net/2/grant-types/authorization-code/>
 
 [OAuth 2.0]: https://tools.ietf.org/html/rfc6749
+[OpenID Connect]: openidconnect.md

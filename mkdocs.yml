@@ -7,13 +7,13 @@ nav:
   - Home: index.md
   - "OAuth for Server-side web applications": oauth2webserver.md
   - "OAuth for Mobile, Desktop and Single-page applications": oauth2installedapps.md
+  - "OAuth for Native first-party applications": oauth2nativefirstparty.md
+  - "OAuth for Service Users": oauth2serviceuser.md
+  - "OpenID Connect": openidconnect.md
 
 # Repository
 repo_name: 'roberveral/oauth-server'
 repo_url: 'https://github.com/roberveral/oauth-server'
-
-# Copyright
-copyright: 'Copyright &copy; 2019 Roberto Veral'
 
 # Configuration
 theme:
