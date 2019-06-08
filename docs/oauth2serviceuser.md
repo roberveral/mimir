@@ -1,41 +1,41 @@
 # OAuth for Service to Service communication
 
 This document explains how [OAuth 2.0] can be used for service-to-service interactions. When a service
-interacts with the Resource Servers protected by this OAuth Server, it uses an access token to act in
-its own behalf. As the user is not involved in this flow, this kind of token is usually called *two-legged token*
-(compared to the usual *three-legged token* when the user grants consent to the client to access his
-resources).
+access OAuth 2.0 Protected Resources it does so acting on its own behalf. As the user is not involved
+in this flow, this kind of token is usually called *two-legged token* (compared to the *three-legged token*
+when the user grants consent to the client to access his own resources).
 
-This flow, called **Client Credentials**, can only be used to access the service's own data in the resource
-servers or data which is not owned by any concrete user (or that its open to every registered user).
+This flow, called **Client Credentials**, can only be used to access the service's own OAuth 2.0 Protected
+Resources.
 
-It's assumed than the clients that use this flow are backend services and therefore they can keep a secret.
+It's assumed that the clients that use this flow are backend services and therefore they can keep a secret.
 
 ## Obtaining OAuth 2.0 access tokens
 
-The following steps show how a service interacts with the OAuth Server to obtain 
-an access token to act on his own behalf in front of a certain Resource Server protected with 
+The following steps show how a service interacts with **Mimir** to obtain
+an *access token* to act on his own behalf in front of a certain *Resource Server* protected with
 [OAuth 2.0].
 
-### Prerrequisite: Register the client in the OAuth Server
+### Prerrequisite: Register the client in Mimir
 
-In order to use this flow, the application must be registered as a client in the OAuth Server to obtain
+In order to use this flow, the application must be registered as a client in **Mimir** to obtain
 client credentials.
 
 The client needs to declare that it wants to use the `client_credentials` flow.
 
-### Step 1: Obtrain an access token
+### Step 1: Obtain an access token
 
-The client has to present a form to the user so it can obtain the user's credentials. Once the user has
-introduced its credentials, the client can exchange this credentials for an access token by making the
-following request with the parameters form-encoded:
+As the client has its own credentials (*client_id* and *client_secret*) it
+can use them to obtain an *access token* to act in its own behalf by sending
+a POST request to the API exposed by **Mimir**, setting the proper form-encoded
+parameters.
 
-```
-POST https://[OAUTH_SERVER_API]/v0/oauth/token
-    grant_type=client_credentials&
-    client_id=[APPLICAITON_CLIENT_ID]&
-    client_secret=[APPLICATION_CLIENT_SECRET]&
-    scope=[REQUESTED_USER_ACCESS]
+```http
+POST https://[MIMIR_API]/v0/oauth/token
+        grant_type=client_credentials&
+        client_id=[APPLICAITON_CLIENT_ID]&
+        client_secret=[APPLICATION_CLIENT_SECRET]&
+        scope=[REQUESTED_USER_ACCESS]
 ```
 
 Parameter | Description | Required
@@ -47,12 +47,12 @@ Parameter | Description | Required
 
 Example:
 
-```
+```http
 POST https://accounts.example.org/v0/oauth/token
-    grant_type=password&
-    client_id=1&
-    client_secret=1234&
-    scope=openid
+        grant_type=password&
+        client_id=1&
+        client_secret=1234&
+        scope=openid
 ```
 
 On a successful request, the server returns a 200 OK response with the following parameters in a JSON object.
@@ -75,7 +75,7 @@ Example:
 
 ### Step 2: Access Resource Servers
 
-The application now can use the obtained access token to access APIs protected by OAuth. To do so, it just needs to
+The application now can use the obtained access token to OAuth 2.0 Protected Resources. To do so, it just needs to
 provide the token in the `Authorization` header:
 
 `Authorization: Bearer [ACCESS_TOKEN]`
