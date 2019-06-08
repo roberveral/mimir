@@ -11,6 +11,7 @@ nav:
     - "OAuth for Native first-party applications": oauth2nativefirstparty.md
     - "OAuth for Service Users": oauth2serviceuser.md
     - "OpenID Connect": openidconnect.md
+    - "OAuth for Resource Servers": resourceservers.md
 
 # Repository
 repo_name: 'roberveral/oauth-server'

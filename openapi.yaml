@@ -1,7 +1,7 @@
 openapi: 3.0.2
 info:
-  title: OAuth Authorization Server API
-  description: Definition of the REST API exported by the OAuth Authorization Server.
+  title: Mimir API
+  description: Definition of the REST API exported by Mimir, an OAuth 2.0 and OpenID Connect Authorization Server implementation in Golang.
   version: 0.1.0
   license:
     name: Apache 2.0
@@ -16,8 +16,26 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    oAuth:
+      type: oauth2
+      description: This API uses OAuth 2.0 with the authorization code, password and client credentials authorization flows.
+      flows:
+        authorizationCode:
+          authorizationUrl: http://localhost:4200/oauth/authorize
+          tokenUrl: http://localhost:8000/v0/oauth/token
+          scopes:
+            openid: Indicates that the user wants to obtain OpenID Connect information.
+            profile: This scope value requests access to the End-User's default profile claims. 
+            email: This scope value requests access to the email claim.
+        password:
+          tokenUrl: http://localhost:8000/v0/oauth/token
+          scopes:
+            openid: Indicates that the user wants to obtain OpenID Connect information.
+            profile: This scope value requests access to the End-User's default profile claims. 
+            email: This scope value requests access to the email claim.
+
   schemas:
-    # Models related to User authentication against the Authorization Server (no OAuth)
+    # Models related to User authentication against Mimir (no OAuth)
     UserLoginInput:
       type: object
       description: Credentials of the user to authenticate.
@@ -46,7 +64,7 @@ components:
     # Model related to OAuth client registration
     ClientInput:
       type: object
-      description: Model used for registering new clients in the Authorization Server.
+      description: Model used for registering new clients in Mimir.
       properties:
         name:
           type: string
@@ -82,7 +100,7 @@ components:
     
     Client:
       type: object
-      description: Model for application clients registered in the Authorization Server.
+      description: Model for application clients registered in Mimir.
       properties:
         client_id:
           type: string
@@ -133,11 +151,11 @@ components:
     # Models related to OAuth 2.0 defined endpoints
     OAuthAuthorizeResponse:
       type: object
-      description: Response sent back by the Authorization Server when an OAuth authorization request is performed.
+      description: Response sent back by Mimir when an OAuth authorization request is performed.
       properties:
         code:
           type: string
-          description: Authorization Code sent to the callback so it can be used to obtain an access token. Token is encrypted so only the Authorization Server can access the token information.
+          description: Authorization Code sent to the callback so it can be used to obtain an access token. Token is encrypted so only Mimir can access the token information.
           example: "eYJasd454vdsfs2awvbpoy4"
         redirect_uri:
           type: string
@@ -162,6 +180,7 @@ components:
           example: "eYJasd454vdsfs2awvbpoy4"
         redirect_uri:
           type: string
+          format: uri
           example: "https://myapplication.example.org/authorize"
           description: Must be identical to the redirect URI used in the Authorization phase. (Authorization Code Flow - REQUIRED)
         client_id:
@@ -194,11 +213,11 @@ components:
         
     OAuthTokenResponse:
       type: object
-      description: Response sent back by the Authorization Server when an OAuth token request is performed.
+      description: Response sent back by Mimir when an OAuth token request is performed.
       properties:
         access_token:
           type: string
-          description: Access token for the client and user, which can be used to access Resource Servers. It's a JWT token, which can be decoded with the Authorization Server public key.
+          description: Access token for the client and user, which can be used to access Resource Servers. It's a JWT token, which can be decoded with Mimir public key.
           example: "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.VFb0qJ1LRg_4ujbZoRMXnVkUgiuKq5KxWqNdbKq_G9Vvz-S1zZa9LPxtHWKa64zDl2ofkT8F6jBt_K4riU-fPg"
         token_type:
           type: string
@@ -212,6 +231,31 @@ components:
         - access_token
         - token_type
         - expires_in
+
+    OpenIDClaims:
+      type: object
+      description: Claims about the end-user authenticated with OpenID Connect.
+      properties:
+        sub:
+          type: string
+          description: Identifier for the End-User.
+          example: "jdoe"
+        name:
+          type: string
+          description: End-User's full name in displayable form including all name parts.
+          example: "John Doe"
+        picture:
+          type: string
+          format: uri
+          description: URL of the End-User's profile picture.
+          example: "https://cdn.example.org/avatar/jdoe.png"
+        email:
+          type: string
+          format: email
+          description: End-User's preferred e-mail address.
+          example: "jdoe@example.org"
+      required:
+        - sub
 
     JWKSet:
       type: object
@@ -256,6 +300,9 @@ components:
                 type: string
                 description: Values that conform the RSA Public key.
                 example: "AQAB-ASDC-cvewvASD545d"
+    
+    OpenIDDiscovery:
+      type: object
 
     # Error model
     Error:
@@ -321,7 +368,7 @@ paths:
       description: >
         This endpoint allows to authenticate a User against the server IDP (Identity Provider)
         and obtains an authentication token to serve as session to interact with the rest of the
-        endpoints of the Authorization Server, including the OAuth Authorize endpoint.
+        endpoints of Mimir, including the OAuth Authorize endpoint.
       operationId: signIn
       tags: 
         - "Authentication"
@@ -353,11 +400,11 @@ paths:
   # Client-related paths
   /clients:
     summary: Represents the collection of clients.
-    description: This resource represents the collection of clients registered in the Authorization Server.
+    description: This resource represents the collection of clients registered in Mimir.
     get:
-      summary: Obtains all the clients registered in the Authorization Server.
+      summary: Obtains all the clients registered in Mimir.
       description: >
-        This endpoint allows to obtain all the clients registered in the Authorization Server which are owned by
+        This endpoint allows to obtain all the clients registered in Mimir which are owned by
         the user who performs the call, that is, the clients created by this user.
       operationId: getAllClients
       tags: 
@@ -376,13 +423,13 @@ paths:
         default:
           $ref: '#/components/responses/UnexpectedFailure'
     post:
-      summary: Registers a new client in the Authorization Server.
+      summary: Registers a new client in Mimir.
       description: >
-        This endpoint allows to register a new client in the Authorization Server. When the client is registered,
+        This endpoint allows to register a new client in Mimir. When the client is registered,
         random "client_id" and "client_secret" are generated for the client so it can perform the OAuth Authorization
-        flows. The user who performs the client registration are set as owner, so it's the only one who can query the
-        client and its associated secret. It's mandatory to specify which OAuth grant types the client is going to use.
-        Clients are not allowed to use other grant types different than the registered ones.
+        flows. The user who performs the client registration are set as client owner, so it's the only one who can query the
+        client secrets. It's mandatory to specify which OAuth grant types the client is going to use.
+        Clients are not allowed to use other grant types than the registered ones.
       operationId: registerClient
       tags:
         - "Client"
@@ -440,7 +487,7 @@ paths:
     delete:
       summary: Removes the client with the given client_id.
       description: >
-        This endpoint allows to the client with the given client_id from the Authorization Server.
+        This endpoint allows to the client with the given client_id from Mimir.
         Only the client owner can remove it.
       operationId: deleteClient
       tags: 
@@ -464,21 +511,25 @@ paths:
   # OAuth related endpoints
   /oauth/authorize:
     post:
-      summary: Authorizes a client to act on behalf of the user in the Authorization Code OAuth flow.
+      summary: Authorizes a client to act on behalf of the end-user in the Authorization Code OAuth flow.
       description: >
-        This endpoint performs the first step in the OAuth 2 Authorization Code flow. When a call to this
+        This endpoint performs the first step in the OAuth 2.0 Authorization Code flow. When a call to this
         endpoint is performed by an authenticated user, it means that the user is authorizing the client
         defined by the client_id to act on his behalf and therefore to obtain an access token.
 
+
         https://www.oauth.com/oauth2-servers/access-tokens/authorization-code-request/
+
         
         The frontend MUST redirect the user to the returned redirect_uri in order to continue with the
         authorization flow.
+
 
         The server supports the PKCE Extension so clients which can't keep a secret can obtain an access
         token by passing a random secret as a code_challenge in the Authorization request which then the
         server verifies when trying to obtain the access token, identifying that the auhtorization code
         belongs to the right client.
+        
 
         https://www.oauth.com/oauth2-servers/pkce/authorization-request/
       operationId: authorizeOAuthClient
@@ -574,22 +625,31 @@ paths:
         Depending on the grant_type, this token can be to act on behalf of a given user or by the client
         itself.
 
+
         https://www.oauth.com/oauth2-servers/access-tokens/authorization-code-request/
+
+
         https://www.oauth.com/oauth2-servers/access-tokens/password-grant/
+
+
         https://www.oauth.com/oauth2-servers/access-tokens/client-credentials/
+
         
         This endpoint supports the PKCE Extension so clients who can't store a client can obtain an
         access token.
 
+
         https://www.oauth.com/oauth2-servers/pkce/authorization-code-exchange/
 
-        The access token is a JWT token signed with the public key of the authorization server and which
+
+        The access token is a JWT token signed with the public key of Mimir and which
         contains the following information.
+
           - sub (username or client_id, depending on the entity which holds the permission).
-          - cid (client who acts on behalf of the subject).
-          - name (name of the authenticated user).
-          - email (email of the authenticated user).
-          - picture (url to the user profile picture).
+
+          - aud (client who acts on behalf of the subject).
+
+          - scope (array of scopes granted to the client by the end-user).
           
         Resource servers can verify the token integrity and expiration and get the requesting user from
         this token. The public key used to sign the token can be obtained from the /oauth/jwks endpoint,
@@ -639,13 +699,46 @@ paths:
                 $ref: '#/components/schemas/Error'
         default:
           $ref: '#/components/responses/UnexpectedFailure'
-  /oauth/jwks:
+  
+  /openid/userinfo:
+    get:
+      summary: Obtains claims about the authenticated End-User.
+      description: >
+        The UserInfo Endpoint is an OAuth 2.0 Protected Resource that returns
+        claims about the authenticated End-User. In order to use this endpoint
+        clients need to provide an access token which has the OpenID Connect scopes
+        granted.
+
+        The claims returned depend on the granted scopes:
+
+        - profile: This scope value requests access to the End-User's default profile claims. Includes `name` and `picture` claims.
+        
+        - email: This scope value requests access to the `email` claim.
+        
+
+        https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
+      security:
+        - oAuth: [openid]
+      operationId: getUserInfo
+      tags: 
+        - "OAuth"
+      responses:
+        '200':
+          description: End-user identity claims.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenIDClaims'
+        default:
+          $ref: '#/components/responses/UnexpectedFailure'
+
+  /.well-known/jwks.json:
     get:
       summary: Obtains the JWK specification of the keys used to sign tokens.
       description: >
-        Obtains the JWK (JSON Web Key) set with the keys used to sign access tokens,
+        Obtains the JWK (JSON Web Key) set with the keys used to sign access and identity tokens,
         so resource servers can get it from here in order to validate that the tokens have
-        been issued by the Authorization Server.
+        been issued by Mimir.
 
         https://tools.ietf.org/html/rfc7517
       security: []
@@ -654,10 +747,34 @@ paths:
         - "OAuth"
       responses:
         '200':
-          description: Client with the given id.
+          description: JWK specification of the keys used by Mimir.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/JWKSet'
+        default:
+          $ref: '#/components/responses/UnexpectedFailure'
+
+  /.well-known/openid-configuration:
+    get:
+      summary: Obtains the OpenID Connect Discovery document.
+      description: >
+        Obtains the OpenID Connect Discovery document for Mimir as OpenID Provider.
+
+        This document contains information about the OAuth endpoints, available methods,
+        flows, scopes, etc.
+
+        https://openid.net/specs/openid-connect-discovery-1_0.html
+      security: []
+      operationId: getDiscoveryDocument
+      tags: 
+        - "OAuth"
+      responses:
+        '200':
+          description: Mimir OpenID Connect Discovery document.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenIDDiscovery'
         default:
           $ref: '#/components/responses/UnexpectedFailure'
