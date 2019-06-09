@@ -303,6 +303,79 @@ components:
     
     OpenIDDiscovery:
       type: object
+      description: OpenID Connect Discovery provider metadata (https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata).
+      properties:
+        issuer:
+          type: string
+          format: uri
+          description: URL using the https scheme with no query or fragment component that the OP asserts as its Issuer Identifier.
+          example: https://localhost:8000
+        authorization_endpoint:
+          type: string
+          format: uri
+          description: URL of the OP's OAuth 2.0 Authorization Endpoint.
+          example: https://localhost:4200/oauth/authorize
+        token_endpoint:
+          type: string
+          format: uri
+          description: URL of the OP's OAuth 2.0 Token Endpoint.
+          example: https://localhost:8000/v0/oauth/token
+        userinfo_endpoint:
+          type: string
+          format: uri
+          description: URL of the OP's UserInfo Endpoint.
+          example: https://localhost:8000/v0/openid/userinfo
+        jwks_uri:
+          type: string
+          format: uri
+          description: URL of the OP's JSON Web Key Set document.
+          example: https://localhost:8000/.well-known/jwks.json
+        registration_endpoint:
+          type: string
+          format: uri
+          description: URL of the OP's Dynamic Client Registration Endpoint.
+          example: https://localhost:8000/v0/clients
+        scopes_supported:
+          type: array
+          items:
+            type: string
+          description: JSON array containing a list of the OAuth 2.0 [RFC6749] scope values that this server supports.
+          example: ["openid", "profile", "email"]
+        response_types_supported:
+          type: array
+          items:
+            type: string
+            enum: ["code"]
+          description: JSON array containing a list of the OAuth 2.0 response_type values that this OP supports.
+          example: ["code"]
+        grant_types_supported:
+          type: array
+          items:
+            type: string
+            enum: ["authorization_code", "password", "client_credentials"]
+          description: JSON array containing a list of the OAuth 2.0 Grant Type values that this OP supports.
+          example: ["authorization_code", "password", "client_credentials"]
+        id_token_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+            enum: ["RS256"]
+          description: JSON array containing a list of the JWS signing algorithms (alg values) supported by the OP for the ID Token to encode the Claims in a JWT.
+          example: ["RS256"]
+        token_endpoint_auth_methods_supported:
+          type: array
+          items:
+            type: string
+            enum: ["client_secret_post"]
+          description: JSON array containing a list of Client Authentication methods supported by this Token Endpoint.
+          example: ["client_secret_post"]
+        code_challenge_methods_supported:
+          type: array
+          items:
+            type: string
+            enum: ["plain", "S256"]
+          description: JSON array containing the list of code_challenge_method supported by the authorization endpoint for PKCE extension
+          example: ["plain", "S256"]
 
     # Error model
     Error:

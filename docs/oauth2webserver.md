@@ -1,4 +1,4 @@
-# OAuth for Server-side web applications
+# OAuth 2.0 for Server-side web applications
 
 This document explains how a server-side web application can become an [OAuth 2.0] client so
 it can obtain access to OAuth 2.0 Protected Resources owned by a user without

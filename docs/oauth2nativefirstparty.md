@@ -1,4 +1,4 @@
-# OAuth for Native first-party applications
+# OAuth 2.0 for Native first-party applications
 
 This document explains how a native first-party application can obtain access to OAuth 2.0 Protected Resources
 owned by a user by exchanging the user's credentials for an

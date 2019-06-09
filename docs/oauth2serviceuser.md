@@ -1,4 +1,4 @@
-# OAuth for Service to Service communication
+# OAuth 2.0 for Service to Service communication
 
 This document explains how [OAuth 2.0] can be used for service-to-service interactions. When a service
 access OAuth 2.0 Protected Resources it does so acting on its own behalf. As the user is not involved

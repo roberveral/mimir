@@ -1,4 +1,4 @@
-# OAuth for Mobile, Desktop and Single-page applications
+# OAuth 2.0 for Mobile, Desktop and Single-page applications
 
 This document explains how applications installed in mobile devices and computers can become [OAuth 2.0]
 clients so they can obtain access to OAuth 2.0 Protected Resources owned by a user without
