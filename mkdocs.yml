@@ -1,0 +1,48 @@
+# Project information
+site_name: 'Mimir'
+site_description: 'An OAuth 2.0 and OpenID Connect server implementation in Golang'
+site_author: 'Rober Veral'
+
+nav:
+  - Home: index.md
+  - "For Developers":
+    - "OAuth 2.0 Introduction": oauth2intro.md
+    - "OAuth 2.0 for Server-side web applications": oauth2webserver.md
+    - "OAuth 2.0 for Mobile, Desktop and Single-page applications": oauth2installedapps.md
+    - "OAuth 2.0 for Native first-party applications": oauth2nativefirstparty.md
+    - "OAuth 2.0 for Service Users": oauth2serviceuser.md
+    - "OpenID Connect": openidconnect.md
+    - "OAuth 2.0 for Resource Servers": resourceservers.md
+
+# Repository
+repo_name: 'roberveral/oauth-server'
+repo_url: 'https://github.com/roberveral/oauth-server'
+
+# Configuration
+theme:
+  name: 'material'
+  language: 'en'
+  palette:
+    primary: 'indigo'
+    accent: 'indigo'
+  font:
+    text: 'Roboto'
+    code: 'Roboto Mono'
+  logo:
+    icon: 'lock'
+
+# Customization
+extra:
+  social:
+    - type: 'github'
+      link: 'https://github.com/roberveral'
+    - type: 'twitter'
+      link: 'https://twitter.com/roberveral'
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
