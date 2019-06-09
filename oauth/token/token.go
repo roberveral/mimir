@@ -3,8 +3,8 @@ package token
 import (
 	"time"
 
-	"github.com/roberveral/oauth-server/jwt"
-	"github.com/roberveral/oauth-server/oauth/model"
+	"github.com/roberveral/mimir/jwt"
+	"github.com/roberveral/mimir/oauth/model"
 
 	jose "gopkg.in/square/go-jose.v2/jwt"
 )

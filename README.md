@@ -1,6 +1,6 @@
 # Mimir
 
-An OAuth 2.0 and OpenID Connect server implementation in Golang.
+An OAuth 2.0 and OpenID Connect Authorization Server implementation in Golang.
 
 ## Getting started
 

@@ -3,7 +3,7 @@ package oauth
 import (
 	"fmt"
 
-	"github.com/roberveral/oauth-server/oauth/model"
+	"github.com/roberveral/mimir/oauth/model"
 )
 
 // InvalidResponseTypeError is the error returned when an unsupported response_type

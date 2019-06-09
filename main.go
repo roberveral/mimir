@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/roberveral/oauth-server/config"
+	"github.com/roberveral/mimir/config"
 
 	"github.com/gorilla/mux"
-	"github.com/roberveral/oauth-server/api"
-	"github.com/roberveral/oauth-server/api/auth"
+	"github.com/roberveral/mimir/api"
+	"github.com/roberveral/mimir/api/auth"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -1,6 +1,6 @@
 package config
 
-import "github.com/roberveral/oauth-server/oauth/repository/mongodb"
+import "github.com/roberveral/mimir/oauth/repository/mongodb"
 
 // MongoDB is the configuration related to the MongoDB connection.
 type MongoDB struct {

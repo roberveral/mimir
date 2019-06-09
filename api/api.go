@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/roberveral/oauth-server/utils"
+	"github.com/roberveral/mimir/utils"
 
 	log "github.com/sirupsen/logrus"
 )

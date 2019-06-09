@@ -4,20 +4,23 @@ services:
     image: roberveral/mimir:0.1.0
     environment: 
       MIMIR_API_PORT: 8000
-      MIMIR_LDAP_URL: ldap://mimir-ldap
+      MIMIR_LDAP_URL: ldap://ldap
       MIMIR_LDAP_USER_DN: "cn=readonly,dc=example,dc=org"
       MIMIR_LDAP_PASSWORD: "readonly"
       MIMIR_LDAP_BASE_DN: "dc=example,dc=org"
       MIMIR_LDAP_NAME_ATTR: gecos
-      MIMIR_MONGO_URL: mongodb://mimir-mongo:27017
+      MIMIR_MONGO_URL: mongodb://mongo:27017
       MIMIR_MONGO_DB: oauth
     ports: 
       - 8000:8000
-  mimir-mongo:
+    depends_on:
+      - mongo
+      - ldap
+  mongo:
     image: mongo
     ports: 
       - 27017:27017
-  mimir-ldap:
+  ldap:
     image: osixia/openldap:1.2.4
     environment: 
       LDAP_READONLY_USER: "true"

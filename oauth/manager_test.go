@@ -3,7 +3,7 @@ package oauth
 import (
 	"testing"
 
-	"github.com/roberveral/oauth-server/oauth/model"
+	"github.com/roberveral/mimir/oauth/model"
 	"github.com/stretchr/testify/assert"
 )
 

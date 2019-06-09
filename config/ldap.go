@@ -1,6 +1,6 @@
 package config
 
-import "github.com/roberveral/oauth-server/oauth/idp/ldap"
+import "github.com/roberveral/mimir/oauth/idp/ldap"
 
 // LDAP is the configuration related to the LDAP connection as user directory.
 type LDAP struct {

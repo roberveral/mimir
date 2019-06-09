@@ -5,15 +5,15 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/roberveral/oauth-server/openid"
-	"github.com/roberveral/oauth-server/utils"
+	"github.com/roberveral/mimir/openid"
+	"github.com/roberveral/mimir/utils"
 
-	"github.com/roberveral/oauth-server/jwt"
-	"github.com/roberveral/oauth-server/oauth/idp"
-	"github.com/roberveral/oauth-server/oauth/model"
-	"github.com/roberveral/oauth-server/oauth/repository"
-	"github.com/roberveral/oauth-server/oauth/repository/mongodb"
-	"github.com/roberveral/oauth-server/oauth/token"
+	"github.com/roberveral/mimir/jwt"
+	"github.com/roberveral/mimir/oauth/idp"
+	"github.com/roberveral/mimir/oauth/model"
+	"github.com/roberveral/mimir/oauth/repository"
+	"github.com/roberveral/mimir/oauth/repository/mongodb"
+	"github.com/roberveral/mimir/oauth/token"
 
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"

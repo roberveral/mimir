@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/roberveral/oauth-server/oauth/model"
+	"github.com/roberveral/mimir/oauth/model"
 )
 
 // IdentityProvider is the service which manages user (Resource Owner) accounts and
