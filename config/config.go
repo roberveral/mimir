@@ -42,7 +42,7 @@ func (t *TTL) Decode(value string) error {
 func Load() (*App, error) {
 	log.Info("Loading configuration from environment variables")
 	var conf App
-	err := envconfig.Process("app", &conf)
+	err := envconfig.Process("mimir", &conf)
 	if err != nil {
 		return nil, err
 	}

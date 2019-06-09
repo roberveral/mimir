@@ -1,23 +1,23 @@
 version: '3'
 services:
-  oauth-server:
-    image: roberveral/oauth-server:0.1.0
+  mimir:
+    image: roberveral/mimir:0.1.0
     environment: 
-      APP_API_PORT: 8000
-      APP_LDAP_URL: ldap://oauth-ldap
-      APP_LDAP_USER_DN: "cn=readonly,dc=example,dc=org"
-      APP_LDAP_PASSWORD: "readonly"
-      APP_LDAP_BASE_DN: "dc=example,dc=org"
-      APP_LDAP_NAME_ATTR: gecos
-      APP_MONGO_URL: mongodb://oauth-mongo:27017
-      APP_MONGO_DB: oauth
+      MIMIR_API_PORT: 8000
+      MIMIR_LDAP_URL: ldap://mimir-ldap
+      MIMIR_LDAP_USER_DN: "cn=readonly,dc=example,dc=org"
+      MIMIR_LDAP_PASSWORD: "readonly"
+      MIMIR_LDAP_BASE_DN: "dc=example,dc=org"
+      MIMIR_LDAP_NAME_ATTR: gecos
+      MIMIR_MONGO_URL: mongodb://mimir-mongo:27017
+      MIMIR_MONGO_DB: oauth
     ports: 
       - 8000:8000
-  oauth-mongo:
+  mimir-mongo:
     image: mongo
     ports: 
       - 27017:27017
-  oauth-ldap:
+  mimir-ldap:
     image: osixia/openldap:1.2.4
     environment: 
       LDAP_READONLY_USER: "true"

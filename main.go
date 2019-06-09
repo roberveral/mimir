@@ -12,7 +12,7 @@ import (
 const apiVersion = "/v0"
 
 func main() {
-	log.Info("OAuth Authorization Server - Starting...")
+	log.Info("Mimir - Starting...")
 
 	conf, err := config.Load()
 	if err != nil {
