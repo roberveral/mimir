@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/roberveral/oauth-server/api/auth"
-	"github.com/roberveral/oauth-server/utils"
+	"github.com/roberveral/mimir/api/auth"
+	"github.com/roberveral/mimir/utils"
 	"github.com/rs/cors"
 
 	log "github.com/sirupsen/logrus"

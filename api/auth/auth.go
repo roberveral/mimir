@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/roberveral/oauth-server/api"
-	"github.com/roberveral/oauth-server/oauth/idp"
+	"github.com/roberveral/mimir/api"
+	"github.com/roberveral/mimir/oauth/idp"
 )
 
 // Authentication is the controller which contains the endpoints

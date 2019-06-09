@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/roberveral/oauth-server/oauth/idp"
-	"github.com/roberveral/oauth-server/oauth/model"
+	"github.com/roberveral/mimir/oauth/idp"
+	"github.com/roberveral/mimir/oauth/model"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/ldap.v3"
 )

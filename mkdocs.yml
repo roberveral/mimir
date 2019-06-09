@@ -15,8 +15,8 @@ nav:
     - "OAuth 2.0 for Resource Servers": resourceservers.md
 
 # Repository
-repo_name: 'roberveral/oauth-server'
-repo_url: 'https://github.com/roberveral/oauth-server'
+repo_name: 'roberveral/mimir'
+repo_url: 'https://github.com/roberveral/mimir'
 
 # Configuration
 theme:

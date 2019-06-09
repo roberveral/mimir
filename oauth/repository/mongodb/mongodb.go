@@ -3,7 +3,7 @@ package mongodb
 import (
 	"context"
 
-	"github.com/roberveral/oauth-server/oauth/model"
+	"github.com/roberveral/mimir/oauth/model"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

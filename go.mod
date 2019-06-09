@@ -1,4 +1,4 @@
-module github.com/roberveral/oauth-server
+module github.com/roberveral/mimir
 
 go 1.12
 

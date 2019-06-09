@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/roberveral/oauth-server/utils"
+	"github.com/roberveral/mimir/utils"
 
 	"github.com/gorilla/mux"
-	"github.com/roberveral/oauth-server/oauth"
+	"github.com/roberveral/mimir/oauth"
 )
 
 // OpenID is the controller which contains the OpenID specific endpoints.

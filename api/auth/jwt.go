@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/roberveral/oauth-server/api"
-	"github.com/roberveral/oauth-server/oauth/model"
-	"github.com/roberveral/oauth-server/utils"
+	"github.com/roberveral/mimir/api"
+	"github.com/roberveral/mimir/oauth/model"
+	"github.com/roberveral/mimir/utils"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )

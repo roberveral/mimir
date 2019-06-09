@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 
-	"github.com/roberveral/oauth-server/jwt"
-	"github.com/roberveral/oauth-server/utils"
+	"github.com/roberveral/mimir/jwt"
+	"github.com/roberveral/mimir/utils"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/roberveral/oauth-server/jwt"
-	"github.com/roberveral/oauth-server/oauth/idp"
-	"github.com/roberveral/oauth-server/oauth/model"
+	"github.com/roberveral/mimir/jwt"
+	"github.com/roberveral/mimir/oauth/idp"
+	"github.com/roberveral/mimir/oauth/model"
 )
 
 // IDToken is a security token that contains Claims about the Authentication of an End-User

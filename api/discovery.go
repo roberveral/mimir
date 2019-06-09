@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/roberveral/oauth-server/oauth"
+	"github.com/roberveral/mimir/oauth"
 )
 
 // Discovery is the controller used to expose the keys used by the Authorization Server to

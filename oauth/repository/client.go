@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"github.com/roberveral/oauth-server/oauth/model"
+	"github.com/roberveral/mimir/oauth/model"
 )
 
 // ClientRepository is the storage where clients registered with the Authorization Server

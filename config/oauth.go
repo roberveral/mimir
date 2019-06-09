@@ -3,12 +3,12 @@ package config
 import (
 	"fmt"
 
-	"github.com/roberveral/oauth-server/jwt"
-	"github.com/roberveral/oauth-server/oauth"
-	"github.com/roberveral/oauth-server/oauth/idp"
-	"github.com/roberveral/oauth-server/oauth/model"
-	"github.com/roberveral/oauth-server/oauth/repository/mongodb"
-	"github.com/roberveral/oauth-server/openid"
+	"github.com/roberveral/mimir/jwt"
+	"github.com/roberveral/mimir/oauth"
+	"github.com/roberveral/mimir/oauth/idp"
+	"github.com/roberveral/mimir/oauth/model"
+	"github.com/roberveral/mimir/oauth/repository/mongodb"
+	"github.com/roberveral/mimir/openid"
 	"gopkg.in/square/go-jose.v2"
 )
 

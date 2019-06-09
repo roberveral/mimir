@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/roberveral/oauth-server/oauth"
-	"github.com/roberveral/oauth-server/oauth/model"
-	"github.com/roberveral/oauth-server/utils"
+	"github.com/roberveral/mimir/oauth"
+	"github.com/roberveral/mimir/oauth/model"
+	"github.com/roberveral/mimir/utils"
 )
 
 // Authorize is the controller which contains the endpoint where OAuth

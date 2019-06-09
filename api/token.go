@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/roberveral/oauth-server/oauth"
-	"github.com/roberveral/oauth-server/oauth/idp"
-	"github.com/roberveral/oauth-server/oauth/model"
-	"github.com/roberveral/oauth-server/utils"
+	"github.com/roberveral/mimir/oauth"
+	"github.com/roberveral/mimir/oauth/idp"
+	"github.com/roberveral/mimir/oauth/model"
+	"github.com/roberveral/mimir/utils"
 )
 
 // Token is the controller which contains the endpoint where OAuth
