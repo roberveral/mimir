@@ -54,6 +54,9 @@ type ApiCORS struct {
 	// Only one wildcard can be used per origin.
 	// Default value is ["*"]
 	AllowedOrigins []string `default:"*" split_words:"true"`
+	// AllowedMethods is a list of methods the client is allowed to use with
+	// cross-domain requests. Default value is simple methods (HEAD, GET and POST).
+	AllowedMethods []string `default:"HEAD,GET,PUT,POST,DELETE,PATCH" split_words:"true"`
 	// AllowedHeaders is list of non simple headers the client is allowed to use with
 	// cross-domain requests.
 	// If the special "*" value is present in the list, all headers will be allowed.
@@ -83,6 +86,7 @@ func (c *Api) Cors(debug bool) *cors.Cors {
 	log.Infof("API CORS configuration: %+v", c.CORS)
 	return cors.New(cors.Options{
 		AllowedOrigins: c.CORS.AllowedOrigins,
+		AllowedMethods: c.CORS.AllowedMethods,
 		AllowedHeaders: c.CORS.AllowedHeaders,
 		ExposedHeaders: c.CORS.ExposedHeaders,
 		Debug:          debug,
