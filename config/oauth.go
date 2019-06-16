@@ -48,6 +48,7 @@ func (c *OAuth) Manager(idp idp.IdentityProvider, store *mongodb.Store, encoder 
 		ScopesSupported:                   append(c.ScopesSupported, openid.OpenIDScope, openid.ProfileScope, openid.EmailScope),
 		ResponseTypesSupported:            []string{string(model.CodeResponseType)},
 		GrantTypesSupported:               []string{string(model.AuthorizationCodeGrantType), string(model.PasswordGrantType), string(model.ClientCredentialsGrantType)},
+		SubjectTypesSupported:             []string{"public"},
 		IDTokenSigningAlgValuesSupported:  []string{string(jose.RS256)},
 		TokenEndpointAuthMethodsSupported: []string{openid.ClientSecretPostTokenAuthMethod},
 		CodeChallengeMethodsSupported:     []string{string(model.PlainCodeChallengeMethod), string(model.S256CodeChallengeMethod)},

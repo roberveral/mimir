@@ -114,6 +114,8 @@ type ProviderMetadata struct {
 	ResponseTypesSupported []string `json:"response_types_supported"`
 	// JSON array containing a list of the OAuth 2.0 Grant Type values that this OP supports.
 	GrantTypesSupported []string `json:"grant_types_supported,omitempty"`
+	// JSON array containing a list of the Subject Identifier types that this OP supports. Valid types include pairwise and public.
+	SubjectTypesSupported []string `json:"subject_types_supported,omitempty"`
 	// JSON array containing a list of the JWS signing algorithms (alg values) supported by the
 	// OP for the ID Token to encode the Claims in a JWT.
 	IDTokenSigningAlgValuesSupported []string `json:"id_token_signing_alg_values_supported,omitempty"`
