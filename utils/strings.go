@@ -36,3 +36,9 @@ func GenerateSHA256(s string) string {
 	sha := sha256.Sum256([]byte(s))
 	return base64.URLEncoding.EncodeToString(sha[:])
 }
+
+// GenerateSHA256NoPadding generates the Base64 URL Encoded SHA-256 hash of a given string with no padding.
+func GenerateSHA256NoPadding(s string) string {
+	sha := sha256.Sum256([]byte(s))
+	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(sha[:])
+}

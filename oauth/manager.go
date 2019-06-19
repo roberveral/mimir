@@ -335,7 +335,9 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 	}
 
 	// If no secret provider, check PKCE extension code challenge
-	if input.ClientSecret == "" && code.CodeChallenge != utils.GenerateSHA256(input.CodeVerifier) {
+	if input.ClientSecret == "" &&
+		code.CodeChallenge != utils.GenerateSHA256(input.CodeVerifier) &&
+		code.CodeChallenge != utils.GenerateSHA256NoPadding(input.CodeVerifier) {
 		return nil, &InvalidCodeVerifierError{}
 	}
 
