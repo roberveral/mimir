@@ -7,6 +7,7 @@ import (
 	"github.com/roberveral/mimir/jwt"
 	"github.com/roberveral/mimir/oauth/idp"
 	"github.com/roberveral/mimir/oauth/model"
+	"github.com/roberveral/mimir/utils"
 )
 
 // IDToken is a security token that contains Claims about the Authentication of an End-User
@@ -26,6 +27,9 @@ type IDToken struct {
 	IssuedAt int64 `json:"iat"`
 	// Time when the End-User authentication occurred.
 	AuthTime int64 `json:"auth_time,omitempty"`
+	// String value used to associate a Client session with an ID Token, and to mitigate replay attacks.
+	// The value is passed through unmodified from the Authentication Request to the ID Token.
+	Nonce string `json:"nonce,omitempty"`
 }
 
 // Claims about the End-User and the Authentication event.
@@ -219,12 +223,16 @@ func (m *Provider) IdentityToken(ctx context.Context, accessToken *model.OAuthAc
 		return nil, err
 	}
 
+	authTime, _ := utils.GetUserAuthTimeFromContext(ctx)
+
 	return &IDToken{
 		Claims:         *claims,
 		Issuer:         m.Metadata.Issuer,
 		Audience:       accessToken.ClientID,
 		ExpirationTime: accessToken.ExpirationTime.Unix(),
 		IssuedAt:       time.Now().Unix(),
+		Nonce:          accessToken.Nonce,
+		AuthTime:       authTime.Unix(),
 	}, nil
 }
 

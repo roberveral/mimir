@@ -101,4 +101,9 @@ type OAuthAccessToken struct {
 
 	// Time when the token is no longer valid.
 	ExpirationTime time.Time
+
+	// (OpenID Connect) Optional string value used to associate a Client session with an ID Token,
+	// and to mitigate replay attacks. The value is passed through unmodified from the
+	// Authentication Request to the ID Token.
+	Nonce string
 }

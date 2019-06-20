@@ -59,6 +59,16 @@ type OAuthAuthorizeInput struct {
 	// 'plain' (the client has sent the code verifier) or 'S256' (the client has sent
 	// a Base64 URL encoded SHA-256 hash of the code verifier)
 	CodeChallengeMethod OAuthCodeChallengeMethod
+
+	// (OpenID Connect) Optional string value used to associate a Client session with an ID Token,
+	// and to mitigate replay attacks. The value is passed through unmodified from the
+	// Authentication Request to the ID Token.
+	Nonce string
+
+	// (OpenID Connect) Optional Maximum Authentication Age. Specifies the allowable elapsed time
+	// in seconds since the last time the End-User was actively authenticated by the OP. If the elapsed
+	// time is greater than this value, the OP MUST attempt to actively re-authenticate the End-User.
+	MaxAge int
 }
 
 // OAuthAuthorizeResponse is the response sent back by the Authorization Server
@@ -103,4 +113,9 @@ type OAuthAuthorizationCode struct {
 	// Base64 URL encoded code verifier that the client sets during authorization
 	// to be checked later when obtaining an access token.
 	CodeChallenge string
+
+	// (OpenID Connect) Optional string value used to associate a Client session with an ID Token,
+	// and to mitigate replay attacks. The value is passed through unmodified from the
+	// Authentication Request to the ID Token.
+	Nonce string
 }

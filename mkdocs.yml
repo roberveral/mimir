@@ -46,3 +46,11 @@ markdown_extensions:
       guess_lang: false
   - toc:
       permalink: true
+
+use_directory_urls: false
+
+plugins:
+    - pdf-export:
+        verbose: true
+        enabled_if_env: ENABLE_PDF_EXPORT
+        combined: true

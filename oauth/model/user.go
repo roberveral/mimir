@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 // User is the model for a Resource Owner fetched from the Identity Provider.
 type User struct {
 	// Unique ID of the user.
@@ -13,4 +15,7 @@ type User struct {
 
 	// URI to the profile picture of the user.
 	PictureURI string
+
+	// Time when the user was authenticated.
+	AuthTime time.Time
 }

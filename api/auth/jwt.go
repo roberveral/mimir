@@ -92,6 +92,7 @@ func (j *Jwt) DecodeToken(rawToken string) (*model.User, error) {
 		Name:       claims.Name,
 		Email:      claims.Email,
 		PictureURI: claims.PictureURI,
+		AuthTime:   claims.IssuedAt.Time(),
 	}, nil
 }
 
@@ -113,7 +114,7 @@ func (j *Jwt) Handler(h http.Handler) http.Handler {
 			return
 		}
 
-		newRequest := r.WithContext(utils.SetAuthenticatedUserInContext(r.Context(), user.UserID))
+		newRequest := r.WithContext(utils.SetAuthenticatedUserInContext(r.Context(), user.UserID, user.AuthTime))
 
 		h.ServeHTTP(rw, newRequest)
 	})

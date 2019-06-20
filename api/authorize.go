@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -41,6 +42,12 @@ func (c *Authorize) Register(r *mux.Router) {
 // The frontend MUST redirect the user to the returned redirect_uri in order to
 // continue with the authorization flow.
 func (c *Authorize) AuthorizeOAuthClient(rw http.ResponseWriter, r *http.Request) error {
+	maxAge, err := strconv.Atoi(r.URL.Query().Get("max_age"))
+	if err != nil {
+		SendErrorResponse(http.StatusBadRequest, rw, err)
+		return nil
+	}
+
 	input := &model.OAuthAuthorizeInput{
 		ResponseType:        model.OAuthResponseType(r.URL.Query().Get("response_type")),
 		ClientID:            r.URL.Query().Get("client_id"),
@@ -49,6 +56,8 @@ func (c *Authorize) AuthorizeOAuthClient(rw http.ResponseWriter, r *http.Request
 		Scope:               strings.Fields(r.URL.Query().Get("scope")),
 		CodeChallenge:       r.URL.Query().Get("code_challenge"),
 		CodeChallengeMethod: model.OAuthCodeChallengeMethod(r.URL.Query().Get("code_challenge_method")),
+		Nonce:               r.URL.Query().Get("nonce"),
+		MaxAge:              maxAge,
 	}
 
 	if err := utils.ValidateStruct(input); err != nil {

@@ -37,7 +37,6 @@ type OAuth struct {
 // Manager instantiates a new OAuth manager based on the configuration.
 // It uses the given identity provider, store and token provider.
 func (c *OAuth) Manager(idp idp.IdentityProvider, store *mongodb.Store, encoder jwt.Encoder) *oauth.Manager {
-	fmt.Println(c)
 	providerMetadata := &openid.ProviderMetadata{
 		Issuer:                            c.Issuer,
 		AuthorizationEndpoint:             c.UIAuthorizeEndpoint,

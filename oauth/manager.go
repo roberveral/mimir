@@ -294,7 +294,7 @@ func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, i
 		if input.CodeChallengeMethod == model.S256CodeChallengeMethod {
 			codeChallenge = input.CodeChallenge
 		} else {
-			codeChallenge = utils.GenerateSHA256(input.CodeChallenge)
+			codeChallenge = utils.GenerateSHA256NoPadding(input.CodeChallenge)
 		}
 	}
 
@@ -306,6 +306,7 @@ func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, i
 		Scope:          input.Scope,
 		ExpirationTime: time.Now().Add(codeExpirationTime * time.Second),
 		CodeChallenge:  codeChallenge,
+		Nonce:          input.Nonce,
 	}
 
 	return code, nil
@@ -336,7 +337,6 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 
 	// If no secret provider, check PKCE extension code challenge
 	if input.ClientSecret == "" &&
-		code.CodeChallenge != utils.GenerateSHA256(input.CodeVerifier) &&
 		code.CodeChallenge != utils.GenerateSHA256NoPadding(input.CodeVerifier) {
 		return nil, &InvalidCodeVerifierError{}
 	}
@@ -356,6 +356,7 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 		UserID:         code.UserID,
 		Scope:          code.Scope,
 		ExpirationTime: time.Now().Add(tokenExpirationTime * time.Second),
+		Nonce:          code.Nonce,
 	}
 
 	// Mark the authorization code as used, so it's rejected for now on.

@@ -95,6 +95,7 @@ func (j *jwtTokenEncoder) EncodeAuthorizationCode(authorizationCode *model.OAuth
 		authorizationCode.RedirectURI,
 		authorizationCode.Scope,
 		authorizationCode.CodeChallenge,
+		authorizationCode.Nonce,
 	}
 
 	return j.jwtEncoder.Encrypted(&claims)
@@ -116,6 +117,7 @@ func (j *jwtTokenEncoder) DecodeAuthorizationCode(code string) (*model.OAuthAuth
 		Scope:          claims.Scope,
 		ExpirationTime: claims.Expiry.Time(),
 		CodeChallenge:  claims.CodeChallenge,
+		Nonce:          claims.Nonce,
 	}, nil
 }
 
@@ -127,6 +129,7 @@ type authorizationCodeClaims struct {
 	RedirectURI   string   `json:"redirect_uri,omitempty"`
 	Scope         []string `json:"scope,omitempty"`
 	CodeChallenge string   `json:"code_challenge,omitempty"`
+	Nonce         string   `json:"nonce,omitempty"`
 }
 
 // accessTokenClaims defines the struct of the JWT token used as
