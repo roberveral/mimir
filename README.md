@@ -2,6 +2,46 @@
 
 An OAuth 2.0 and OpenID Connect Authorization Server implementation in Golang.
 
+## Motivation
+
+The best way of learning a new protocol is trying to implement a server which follows it, so the main
+purpose of Mimir is learning OAuth 2.0 and OpenID Connect and putting them into practice by writing
+an OpenID Provider/OAuth 2.0 Authorization Server.
+
+## Features
+
+Mimir follows (partially) the following specifications:
+
+- OAuth 2.0 Authorization Framework [RFC6749](https://tools.ietf.org/html/rfc6749).
+    - Authorization Code Grant
+    - Password Grant
+    - Client credentials Grant
+- OAuth 2.0 Bearer Access Tokens [RFC6750](https://tools.ietf.org/html/rfc6750).
+- PKCE for OAuth 2.0 Public Clients [RFC7636](https://tools.ietf.org/html/rfc7636).
+- JSON Web Token for token encoding [RFC7519](https://tools.ietf.org/html/rfc7519).
+- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html).
+    - Authorization Code Flow.
+    - ID Token.
+    - Userinfo endpoint.
+- [OpenID Connect Discovery 1.0](https://openid.net/specs/openid-connect-discovery-1_0.html)
+
+## Yet to be done
+
+Next steps (if I have time and mood to do it) are:
+
+- [ ] Extend compilance with the [RFC6749](https://tools.ietf.org/html/rfc6749).
+    - [ ] Error codes and responses.
+    - [ ] User consent.
+- [ ] Improve compilance with [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html).
+    - [ ] Nonce and Authtime query parameters in Authorization request and their impact in the ID Token.
+- [ ] Make client registration compilant with [OpenID Connect Dynamic Client Registration](https://openid.net/specs/openid-connect-registration-1_0.html) and [OAuth 2.0 Dynamic Client Registration Protocol](https://tools.ietf.org/html/draft-ietf-oauth-dyn-reg-20).
+- [ ] Admin API
+    - [ ] Add/remove scopes.
+    - [ ] First vs third party clients.
+- [ ] Unit tests!!
+- [ ] Improve docs
+
+
 ## Getting started
 
 1. Start necessary Docker Containers

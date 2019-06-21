@@ -294,7 +294,7 @@ func (m *Manager) authCodeAuthorize(ctx context.Context, client *model.Client, i
 		if input.CodeChallengeMethod == model.S256CodeChallengeMethod {
 			codeChallenge = input.CodeChallenge
 		} else {
-			codeChallenge = utils.GenerateSHA256(input.CodeChallenge)
+			codeChallenge = utils.GenerateSHA256NoPadding(input.CodeChallenge)
 		}
 	}
 
@@ -336,7 +336,6 @@ func (m *Manager) authCodeToken(ctx context.Context, client *model.Client, input
 
 	// If no secret provider, check PKCE extension code challenge
 	if input.ClientSecret == "" &&
-		code.CodeChallenge != utils.GenerateSHA256(input.CodeVerifier) &&
 		code.CodeChallenge != utils.GenerateSHA256NoPadding(input.CodeVerifier) {
 		return nil, &InvalidCodeVerifierError{}
 	}
