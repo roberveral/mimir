@@ -42,10 +42,9 @@ func (c *Authorize) Register(r *mux.Router) {
 // The frontend MUST redirect the user to the returned redirect_uri in order to
 // continue with the authorization flow.
 func (c *Authorize) AuthorizeOAuthClient(rw http.ResponseWriter, r *http.Request) error {
-	maxAge, err := strconv.Atoi(r.URL.Query().Get("max_age"))
-	if err != nil {
-		SendErrorResponse(http.StatusBadRequest, rw, err)
-		return nil
+	maxAge := 0
+	if inputMaxAge, err := strconv.Atoi(r.URL.Query().Get("max_age")); err != nil {
+		maxAge = inputMaxAge
 	}
 
 	input := &model.OAuthAuthorizeInput{
